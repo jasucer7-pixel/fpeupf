@@ -1,0 +1,808 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Segunda Mente FPE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: app shell — side rail on desktop, bottom tab bar on phones; one calm column of cards per view. */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --surface-2:#eceef3; --ink:#161b26; --muted:#5a6273; --line:#dde1e8;
+  --accent:#2d55c8; --accent-ink:#ffffff; --accent-soft:#e5ebfa;
+  --ok:#157a3c; --ok-soft:#e1f3e7; --warn:#a85a06; --warn-soft:#fbefdc; --danger:#b42323; --danger-soft:#fbe4e4;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:14px; --r-sm:9px;
+  --shadow:0 1px 2px rgb(20 30 60 / .06), 0 6px 20px rgb(20 30 60 / .05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1117; --surface:#161a22; --surface-2:#1e2330; --ink:#e7eaf1; --muted:#99a2b4; --line:#2a3040;
+  --accent:#86a2ff; --accent-ink:#0e1117; --accent-soft:#1d2849;
+  --ok:#5bd28a; --ok-soft:#13291c; --warn:#f2b54a; --warn-soft:#2d2210; --danger:#f58a8a; --danger-soft:#331616;
+  --shadow:0 1px 2px rgb(0 0 0 / .3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1117; --surface:#161a22; --surface-2:#1e2330; --ink:#e7eaf1; --muted:#99a2b4; --line:#2a3040;
+  --accent:#86a2ff; --accent-ink:#0e1117; --accent-soft:#1d2849;
+  --ok:#5bd28a; --ok-soft:#13291c; --warn:#f2b54a; --warn-soft:#2d2210; --danger:#f58a8a; --danger-soft:#331616;
+  --shadow:0 1px 2px rgb(0 0 0 / .3); color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:1.85rem;letter-spacing:-.01em} h2{font-size:1.15rem} h3{font-size:1rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:1fr;min-height:100%}
+.rail{position:fixed;inset:auto 0 0 0;z-index:20;display:flex;justify-content:space-around;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(8px, env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px, env(safe-area-inset-left,0px))}
+.brand{display:none}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--muted);font-size:.72rem;font-weight:600;padding:6px 8px;border-radius:10px;min-width:56px}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+main{padding-block:20px 110px;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));min-width:0}
+.view{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+@media (min-width:900px){
+  .app{grid-template-columns:232px 1fr}
+  .rail{position:sticky;top:0;inset:auto;height:100vh;flex-direction:column;justify-content:flex-start;gap:4px;border-top:0;border-right:1px solid var(--line);padding:22px 14px}
+  .brand{display:block;font-family:var(--f-display);font-weight:700;font-size:1.15rem;padding:4px 10px 18px;line-height:1.2}
+  .brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:.75rem;color:var(--muted);margin-top:4px}
+  .tab{flex-direction:row;gap:10px;font-size:.92rem;padding:10px 12px;justify-content:flex-start}
+  .tab svg{width:20px;height:20px}
+  .rail-foot{margin-top:auto}
+  main{padding-block:36px 48px}
+}
+.rail-foot{display:none}
+@media (min-width:900px){.rail-foot{display:flex;flex-direction:column;gap:4px}}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.top .meta{color:var(--muted);font-size:.85rem;font-weight:500;margin-bottom:4px;letter-spacing:.01em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+.card.quiet{background:transparent;box-shadow:none;border-style:dashed}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:.85rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:640px){.grid2{grid-template-columns:1fr 1fr}}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.88rem;display:inline-flex;align-items:center;gap:6px;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:var(--surface-2)}
+.btn.sm{padding:5px 10px;font-size:.8rem}
+.btn svg{width:16px;height:16px}
+.btn[disabled]{opacity:.5;cursor:default}
+.icon-btn{border:0;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:9px;display:inline-grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn.on{color:var(--warn)}
+input[type=text],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:84px;line-height:1.45}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted);min-width:0;flex:1}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-size:.84rem;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.8rem;font-weight:600;background:var(--surface);white-space:nowrap}
+button.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.pill{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.examen{background:var(--danger-soft);color:var(--danger)}
+.pill.entrega{background:var(--warn-soft);color:var(--warn)}
+.pill.lectura{background:var(--accent-soft);color:var(--accent)}
+.due{font-size:.78rem;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.due.late{color:var(--danger)} .due.soon{color:var(--warn)} .due.ok{color:var(--muted)}
+.tasks{display:flex;flex-direction:column}
+.task{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--line);min-width:0}
+.task:first-child{border-top:0}
+.task .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.task .t{font-weight:500;overflow-wrap:anywhere}
+.task.done .t{text-decoration:line-through;color:var(--muted)}
+.task .sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.task .acts{display:flex;gap:0;flex:none}
+.check{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);background:var(--surface);flex:none;display:grid;place-items:center;padding:0}
+.check:hover{border-color:var(--ok)}
+.check.on{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.check svg{width:14px;height:14px}
+.group-h{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 0 2px}
+.empty{color:var(--muted);font-size:.9rem;padding:6px 0}
+.quote{font-family:var(--f-display);font-weight:500;font-size:1.12rem;line-height:1.35}
+.quote cite{display:block;font-family:var(--f-body);font-style:normal;font-size:.82rem;color:var(--muted);margin-top:6px}
+.energy{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.energy button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:600;font-size:.85rem}
+.energy button span{font-size:.72rem;font-weight:500;color:var(--muted);text-align:center}
+.energy button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px}
+.bar{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.bar i{display:block;width:100%;max-width:28px;border-radius:6px 6px 3px 3px;background:var(--accent);min-height:3px;opacity:.85}
+.bar.zero i{background:var(--line)}
+.bar.today i{opacity:1}
+.bar b{font-size:.7rem;color:var(--muted);font-weight:600}
+.stats{display:flex;gap:22px;flex-wrap:wrap}
+.stat .n{font-family:var(--f-display);font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.stat .l{font-size:.78rem;color:var(--muted)}
+/* focus */
+.timer-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0}
+.ring{position:relative;width:min(280px,72vw);aspect-ratio:1;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8}
+.ring .trk{stroke:var(--surface-2)}
+.ring .prg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .4s linear}
+.ring.brk .prg{stroke:var(--ok)}
+.ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.ring .time{font-family:var(--f-mono);font-size:clamp(2.4rem,11vw,3.4rem);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ring .mode{font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+/* notes */
+.note{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:6px}
+.note:first-child{border-top:0}
+.note .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.note .sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.pill.idea{background:var(--accent-soft);color:var(--accent)}
+.pill.duda{background:var(--warn-soft);color:var(--warn)}
+.pill.descarga{background:var(--surface-2);color:var(--muted)}
+.pill.apunte{background:var(--ok-soft);color:var(--ok)}
+/* chat */
+.chat{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto}
+.msg{padding:10px 13px;border-radius:14px;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.93rem}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:4px}
+/* calm */
+.breath{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
+.orb{width:180px;height:180px;max-width:100%;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%, var(--accent-soft), var(--surface-2));border:1px solid var(--line);transform:scale(.62);transition:transform 4s ease-in-out}
+.orb span{font-family:var(--f-display);font-weight:700;font-size:1.05rem;color:var(--ink);transform:scale(1.4)}
+.steps{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.step{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.step::before{counter-increment:s;content:counter(s);font-family:var(--f-display);font-weight:700;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.step .body{flex:1;min-width:0}
+.cols{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:560px){.cols{grid-template-columns:1fr 1fr}}
+.col{background:var(--surface-2);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.col li{overflow-wrap:anywhere}
+.col ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+/* misc */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;z-index:50;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+@media (min-width:900px){.toast{bottom:28px}}
+.sync{font-size:.75rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.cloud i{background:var(--ok)}
+.modal{position:fixed;inset:0;background:rgb(10 14 22 / .5);z-index:60;display:grid;place-items:center;padding:16px}
+.modal .card{width:min(520px,100%);max-height:88vh;overflow-y:auto}
+.sugs{display:flex;flex-wrap:wrap;gap:8px}
+details>summary{cursor:pointer;list-style:none;font-weight:600}
+details>summary::-webkit-details-marker{display:none}
+.subj-edit{display:grid;grid-template-columns:auto 1fr 70px auto;gap:8px;align-items:center}
+.color-btn{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <nav class="rail" aria-label="Secciones">
+    <div class="brand">Segunda Mente<small>FPE · UPF</small></div>
+    <button class="tab" data-go="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoy</button>
+    <button class="tab" data-go="foco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>Foco</button>
+    <button class="tab" data-go="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4M8 14h3M8 17h6"/></svg>Plan</button>
+    <button class="tab" data-go="mente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></svg>Mente</button>
+    <button class="tab" data-go="calma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12c3-4 6-4 9 0s6 4 9 0M3 17c3-4 6-4 9 0s6 4 9 0M3 7c3-4 6-4 9 0s6 4 9 0"/></svg>Calma</button>
+    <div class="rail-foot">
+      <button class="tab" data-act="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Ajustes</button>
+    </div>
+  </nav>
+  <main><div id="view" class="view"></div></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const pad = n => String(n).padStart(2,"0");
+const dkey = (d=new Date()) => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseD = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y, m-1, d); };
+const daysBetween = (a,b) => Math.round((parseD(dkey(b)) - parseD(dkey(a))) / 864e5);
+const DOW = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MON = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const LS = "segunda-mente-fpe-v1", LS_T = "segunda-mente-fpe-timer";
+const COLORS = ["#2d55c8","#0f9488","#c2410c","#8b3fd9","#b88a00","#d02f74","#0e87ad","#5a9a12"];
+const ICON = {
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  sunOn:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  split:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l-1 5 3 3H7l3-3zM12 12v8"/></svg>',
+  arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>',
+  skip:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6.5v11a1 1 0 0 0 1.6.8l7.4-5.5a1 1 0 0 0 0-1.6L7.6 5.7A1 1 0 0 0 6 6.5z"/><rect x="16" y="5" width="2.5" height="14" rx="1"/></svg>'
+};
+const QUOTES = [
+  ["No es que tengamos poco tiempo, es que perdemos mucho.","Séneca, Sobre la brevedad de la vida"],
+  ["La atención es la forma más rara y más pura de la generosidad.","Simone Weil"],
+  ["No nos perturban las cosas, sino las opiniones que tenemos sobre las cosas.","Epicteto, Enquiridión 5"],
+  ["Mientras se aplaza, la vida pasa.","Séneca, Cartas a Lucilio 1"],
+  ["Si te angustia algo externo, el dolor no se debe a la cosa, sino a tu juicio sobre ella; y eso puedes revocarlo ahora mismo.","Marco Aurelio, Meditaciones VIII.47"],
+  ["Sapere aude: ten el valor de servirte de tu propio entendimiento.","Kant, ¿Qué es la Ilustración?"],
+  ["Lo que hay que aprender a hacer, lo aprendemos haciéndolo.","Aristóteles, Ética a Nicómaco II"],
+  ["El hombre es libre en el momento en que desea serlo.","Voltaire"]
+];
+const CHEERS = ["Hecho. Una menos.","Bien. Eso ya no ocupa espacio en tu cabeza.","Paso a paso: así se aprueba.","Perfecto. Respira y sigue cuando quieras.","Avance real. Apúntatelo.","Hecho. Tu yo de la semana de exámenes te lo agradece."];
+const SUGGESTED = ["Microeconomía","Macroeconomía","Ciencia Política","Lógica","Historia de la Filosofía","Matemáticas","Estadística","Ética","Teoría Política","Historia Económica","Epistemología","Derecho Constitucional","Economía Política","Filosofía Moral","Métodos de Investigación","Teoría de Juegos"];
+const TYPES = {tarea:"Tarea",lectura:"Lectura",entrega:"Entrega",examen:"Examen"};
+const KINDS = {apunte:"Apunte",idea:"Idea",duda:"Duda para clase",descarga:"Descarga mental"};
+
+/* ---------- state ---------- */
+const defaultState = () => ({ v:1, updated:0, onboarded:false, name:"",
+  subjects:[], tasks:[], notes:[], sessions:[], checkins:{}, control:[],
+  settings:{ focus:25, brk:5, termStart:"2026-09-21" } });
+let S = defaultState();
+try { const raw = localStorage.getItem(LS); if (raw) S = Object.assign(defaultState(), JSON.parse(raw)); } catch(e){}
+let dbRef = null, saveT = null, syncMode = "local";
+function save(){
+  S.updated = Date.now();
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){}
+  if (dbRef){ clearTimeout(saveT); saveT = setTimeout(pushRemote, 600); }
+}
+function pushRemote(){
+  if (!dbRef) return;
+  dbRef.set(JSON.parse(JSON.stringify(S))).catch(err => {
+    if (err && err.code === "unavailable") setTimeout(pushRemote, 1500 + Math.random()*1500);
+    else if (err && (err.code === "invalid_argument" || err.code === "revoked")) { dbRef = null; syncMode = "local"; paintSync(); }
+  });
+}
+// trim history so the document stays small
+function trim(){
+  const cutoff = Date.now() - 180*864e5;
+  S.sessions = S.sessions.filter(s => s.ts > cutoff);
+  const keys = Object.keys(S.checkins).sort(); while (keys.length > 120) delete S.checkins[keys.shift()];
+}
+const subj = id => S.subjects.find(s => s.id === id);
+const subjName = id => subj(id)?.name || "General";
+const subjColor = id => subj(id)?.color || "var(--muted)";
+
+/* ---------- capabilities (optional) ---------- */
+let sample = null;
+async function connect(){
+  const C = window.claude; if (!C || !C.use) return;
+  try {
+    const [db, user] = await Promise.all([C.use("db"), C.use("user")]);
+    if (db && user){
+      const id = await user.id();
+      if (id){
+        const ref = db.doc("data/users/" + id + "/state");
+        const snap = await ref.get();
+        const remote = snap.exists ? snap.data() : null;
+        dbRef = ref; syncMode = "cloud";
+        if (remote && (remote.updated||0) > (S.updated||0)) { S = Object.assign(defaultState(), JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS, JSON.stringify(S));}catch(e){} render(); }
+        else if (S.updated) pushRemote();
+        ref.onSnapshot(s => {
+          if (!s.exists || s.metadata.hasPendingWrites) return;
+          const d = s.data();
+          if ((d.updated||0) > (S.updated||0)) {
+            S = Object.assign(defaultState(), JSON.parse(JSON.stringify(d)));
+            try{localStorage.setItem(LS, JSON.stringify(S));}catch(e){}
+            const a = document.activeElement;
+            if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) render();
+          }
+        }, () => {});
+        paintSync();
+      }
+    }
+  } catch(e){ /* stay local */ }
+  try { sample = await C.use("sample"); } catch(e){ sample = null; }
+  if (sample) render();
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ["hoy","foco","plan","mente","calma"];
+let view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "hoy";
+function go(v){ view = v; if (location.hash.slice(1) !== v) { try{ history.replaceState(null,"","#"+v);}catch(e){ location.hash = v; } } render(); window.scrollTo(0,0); }
+window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS.includes(v) && v !== view){ view = v; render(); } });
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+/* ---------- derived ---------- */
+function termInfo(){
+  const start = parseD(S.settings.termStart || "2026-09-21");
+  const d = daysBetween(start, new Date());
+  if (d < 0) return "Antes del trimestre";
+  const w = Math.floor(d/7) + 1;
+  if (w <= 10) return "Semana " + w + " de 10";
+  if (w <= 13) return "Periodo de exámenes";
+  return "Entre trimestres";
+}
+function dueInfo(due){
+  if (!due) return null;
+  const n = daysBetween(new Date(), parseD(due));
+  let txt, cls;
+  if (n < 0) { txt = n === -1 ? "ayer" : "hace " + (-n) + " días"; cls = "late"; }
+  else if (n === 0) { txt = "hoy"; cls = "late"; }
+  else if (n === 1) { txt = "mañana"; cls = "soon"; }
+  else if (n <= 6) { txt = "en " + n + " días"; cls = "soon"; }
+  else { const d = parseD(due); txt = d.getDate() + " " + MON[d.getMonth()].slice(0,3); cls = "ok"; }
+  return {n, txt, cls};
+}
+function minutesOn(dayKey){ return S.sessions.filter(s => dkey(new Date(s.ts)) === dayKey).reduce((a,s) => a + s.min, 0); }
+function streak(){
+  let n = 0, d = new Date();
+  if (!minutesOn(dkey(d))) d.setDate(d.getDate()-1);
+  while (minutesOn(dkey(d)) > 0) { n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+const todayCheck = () => S.checkins[dkey()] || null;
+const capacity = () => ({baja:1, media:3, alta:4})[todayCheck()?.energy] || 3;
+const byDue = (a,b) => (a.due||"9999") < (b.due||"9999") ? -1 : (a.due||"9999") > (b.due||"9999") ? 1 : 0;
+
+/* ---------- rendering ---------- */
+function render(){
+  document.querySelectorAll(".tab[data-go]").forEach(b => { if (b.dataset.go === view) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  const el = $("#view");
+  if (!S.onboarded) { el.innerHTML = vOnboard(); return; }
+  el.innerHTML = ({hoy:vHoy, foco:vFoco, plan:vPlan, mente:vMente, calma:vCalma})[view]();
+  if (view === "foco") paintTimer();
+  if (view === "mente") { const c = $(".chat"); if (c) c.scrollTop = c.scrollHeight; }
+  paintSync();
+}
+function paintSync(){
+  document.querySelectorAll("[data-sync]").forEach(n => {
+    n.className = "sync" + (syncMode === "cloud" ? " cloud" : "");
+    n.innerHTML = "<i></i>" + (syncMode === "cloud" ? "Guardado en tu cuenta" : "Guardado en este navegador");
+  });
+}
+function header(title, meta, extra=""){
+  return `<header class="top"><div style="min-width:0"><div class="meta">${meta}</div><h1>${title}</h1></div>
+  <div class="row" style="flex:none">${extra}<button class="icon-btn" data-act="settings" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button></div></header>`;
+}
+function taskRow(t, opts={}){
+  const di = dueInfo(t.due);
+  return `<div class="task${t.done?" done":""}" data-id="${t.id}">
+    <button class="check${t.done?" on":""}" data-act="toggle-task" aria-label="${t.done?"Marcar como pendiente":"Marcar como hecha"}">${t.done?ICON.check:""}</button>
+    <div class="body"><span class="t">${esc(t.title)}</span>
+      <span class="sub"><span class="row" style="gap:5px"><span class="dot" style="background:${subjColor(t.subjectId)}"></span>${esc(subjName(t.subjectId))}</span>
+      ${t.type && t.type!=="tarea" ? `<span class="pill ${t.type}">${TYPES[t.type]}</span>`:""}
+      ${t.est ? `<span>${t.est} min</span>`:""}
+      ${di && !t.done ? `<span class="due ${di.cls}">${di.txt}</span>`:""}</span></div>
+    <div class="acts">
+      ${!t.done ? `<button class="icon-btn" data-act="focus-task" aria-label="Empezar foco con esta tarea" title="Empezar foco">${ICON.play}</button>`:""}
+      ${!t.done && opts.today!==false ? `<button class="icon-btn${t.today?" on":""}" data-act="today-task" aria-label="${t.today?"Quitar de hoy":"Añadir a hoy"}" title="${t.today?"Quitar de hoy":"Para hoy"}">${t.today?ICON.sunOn:ICON.sun}</button>`:""}
+      ${opts.split && sample && !t.done ? `<button class="icon-btn" data-act="split-task" aria-label="Trocear en pasos pequeños" title="Trocear con IA">${ICON.split}</button>`:""}
+      ${opts.del ? `<button class="icon-btn" data-act="del-task" aria-label="Borrar tarea" title="Borrar">${ICON.trash}</button>`:""}
+    </div></div>`;
+}
+function subjOptions(sel, withNone=true){
+  return (withNone?`<option value="">General</option>`:"") + S.subjects.map(s => `<option value="${s.id}"${s.id===sel?" selected":""}>${esc(s.name)}</option>`).join("");
+}
+
+/* ---------- onboarding ---------- */
+let obPicked = [];
+function vOnboard(){
+  return `<header class="top"><div><div class="meta">FPE · Universitat Pompeu Fabra</div><h1>Tu segunda mente para estudiar</h1></div></header>
+  <div class="card"><p>Aquí vacías la cabeza, decides <b>una cosa a la vez</b> y estudias en bloques cortos. Empecemos por lo básico; todo se puede cambiar después.</p>
+    <label class="f">¿Cómo te llamo? (opcional)<input type="text" id="ob-name" value="${esc(S.name)}" placeholder="Tu nombre" autocomplete="given-name"></label></div>
+  <div class="card"><div class="card-h"><h2>¿Qué asignaturas tienes este trimestre?</h2><span class="muted small">${obPicked.length} elegidas</span></div>
+    <p class="muted small">Sugerencias habituales del grado. Toca las tuyas o escribe otra.</p>
+    <div class="sugs">${SUGGESTED.map(n => `<button class="chip" data-act="ob-pick" data-name="${esc(n)}" aria-pressed="${obPicked.includes(n)}">${esc(n)}</button>`).join("")}
+      ${obPicked.filter(n => !SUGGESTED.includes(n)).map(n => `<button class="chip" data-act="ob-pick" data-name="${esc(n)}" aria-pressed="true">${esc(n)}</button>`).join("")}</div>
+    <div class="row"><input type="text" id="ob-custom" placeholder="Otra asignatura…" style="flex:1"><button class="btn" data-act="ob-add">Añadir</button></div>
+    <label class="f" style="max-width:240px">Inicio del trimestre<input type="date" id="ob-term" value="${esc(S.settings.termStart)}"></label>
+  </div>
+  <div class="row"><button class="btn primary" data-act="ob-done">Empezar ${ICON.arrow}</button><span data-sync class="sync"></span></div>`;
+}
+
+/* ---------- HOY ---------- */
+let qIdx = Math.floor(Date.now()/864e5) % QUOTES.length;
+function vHoy(){
+  const now = new Date(), hr = now.getHours();
+  const hi = hr < 6 ? "Buenas noches" : hr < 14 ? "Buenos días" : hr < 21 ? "Buenas tardes" : "Buenas noches";
+  const ck = todayCheck(), cap = capacity();
+  const todays = S.tasks.filter(t => t.today && (!t.done || dkey(new Date(t.doneAt||0)) === dkey()));
+  const open = todays.filter(t => !t.done);
+  const sug = S.tasks.filter(t => !t.done && !t.today).sort(byDue).slice(0,3);
+  const upcoming = S.tasks.filter(t => !t.done && t.due && dueInfo(t.due).n <= 14).sort(byDue).slice(0,6);
+  const days = [...Array(7)].map((_,i) => { const d = new Date(); d.setDate(d.getDate()-6+i); return {d, m:minutesOn(dkey(d))}; });
+  const max = Math.max(60, ...days.map(x => x.m));
+  const week = days.reduce((a,x) => a + x.m, 0);
+  const q = QUOTES[qIdx];
+  const energyMsg = !ck ? "" : ck.energy === "baja" ? "Día de energía baja. Hoy basta con <b>una</b> cosa pequeña. Descansar también es parte del plan." : ck.energy === "alta" ? "Buen día para lo difícil. Empieza por lo que más pesa y protege ese primer bloque." : "Día normal: tres cosas como mucho. Lo que no salga, mañana.";
+  return header(`${hi}${S.name ? ", " + esc(S.name) : ""}`, `${DOW[now.getDay()].replace(/^./, c => c.toUpperCase())} ${now.getDate()} de ${MON[now.getMonth()]} · ${termInfo()}`) + `
+  <section class="card"><div class="card-h"><h2>¿Cómo llegas hoy?</h2>${ck?`<span class="muted small">Puedes cambiarlo</span>`:""}</div>
+    <div class="energy" role="group" aria-label="Energía de hoy">
+      ${[["baja","Baja","cansancio, agobio"],["media","Normal","un día cualquiera"],["alta","Alta","con ganas"]].map(([k,l,s]) => `<button data-act="energy" data-v="${k}" aria-pressed="${ck?.energy===k}">${l}<span>${s}</span></button>`).join("")}
+    </div>${energyMsg?`<p class="small">${energyMsg}</p>`:""}</section>
+
+  <section class="card"><div class="card-h"><h2>Lo de hoy</h2><span class="muted small">${open.length} de ${cap} como máximo</span></div>
+    ${todays.length ? `<div class="tasks">${todays.map(t => taskRow(t)).join("")}</div>` : `<p class="empty">Nada elegido aún. Elige ${cap === 1 ? "una cosa" : "hasta " + cap + " cosas"}; no hace falta más.</p>`}
+    ${open.length > cap ? `<p class="small" style="color:var(--warn)">Has elegido más de lo que pide tu energía de hoy. Quita alguna: lo que no salga no es un fracaso.</p>`:""}
+    ${sug.length && open.length < cap ? `<div class="group-h">Sugerencias por fecha</div><div class="tasks">${sug.map(t => taskRow(t)).join("")}</div>`:""}
+    ${!S.tasks.length ? `<button class="btn" data-go="plan">Apuntar entregas y exámenes ${ICON.arrow}</button>`:""}
+    ${open.length ? `<div class="row"><button class="btn primary" data-act="focus-task" data-id="${open[0].id}">${ICON.play} Empezar con «${esc(open[0].title.length>34?open[0].title.slice(0,33)+"…":open[0].title)}»</button></div>`:""}
+  </section>
+
+  <div class="grid2">
+    <section class="card"><div class="card-h"><h2>Se acerca</h2><span class="muted small">próximos 14 días</span></div>
+      ${upcoming.length ? `<div class="tasks">${upcoming.map(t => taskRow(t)).join("")}</div>` : `<p class="empty">Nada con fecha en dos semanas. Buen momento para adelantar lecturas.</p>`}
+    </section>
+    <section class="card"><div class="card-h"><h2>Tu semana</h2></div>
+      <div class="stats"><div class="stat"><div class="n">${minutesOn(dkey())}</div><div class="l">min hoy</div></div>
+      <div class="stat"><div class="n">${(week/60).toFixed(1).replace(".",",")}</div><div class="l">horas en 7 días</div></div>
+      <div class="stat"><div class="n">${streak()}</div><div class="l">días seguidos</div></div></div>
+      <div class="bars" role="img" aria-label="Minutos de foco por día, últimos 7 días">${days.map((x,i) => `<div class="bar${x.m?"":" zero"}${i===6?" today":""}" title="${x.m} min"><i style="height:${Math.max(3, Math.round(x.m/max*70))}px"></i><b>${"DLMXJVS"[x.d.getDay()]}</b></div>`).join("")}</div>
+    </section>
+  </div>
+
+  <section class="card quiet"><blockquote class="quote" style="margin:0">«${esc(q[0])}»<cite>${esc(q[1])}</cite></blockquote>
+    <div class="row"><button class="btn ghost sm" data-act="next-quote">Otra cita</button><span data-sync class="sync"></span></div></section>`;
+}
+
+/* ---------- FOCO ---------- */
+let T = loadTimer();
+function loadTimer(){ try { const t = JSON.parse(localStorage.getItem(LS_T)); if (t) return t; } catch(e){} return {mode:"focus", running:false, total:(S.settings.focus||25)*60, left:(S.settings.focus||25)*60, endAt:0, subjectId:"", taskId:"", cycles:0}; }
+function saveTimer(){ try { localStorage.setItem(LS_T, JSON.stringify(T)); } catch(e){} }
+function timeLeft(){ return T.running ? Math.max(0, Math.round((T.endAt - Date.now())/1000)) : T.left; }
+const fmt = s => pad(Math.floor(s/60)) + ":" + pad(s%60);
+let parked = [];
+function vFoco(){
+  const t = S.tasks.find(x => x.id === T.taskId);
+  const presets = [[25,5],[50,10],[15,3],[10,2]];
+  const todaysMin = S.sessions.filter(s => dkey(new Date(s.ts)) === dkey());
+  const bySub = {}; todaysMin.forEach(s => bySub[s.subjectId||""] = (bySub[s.subjectId||""]||0) + s.min);
+  return header("Foco", T.mode === "focus" ? "Un bloque. Una tarea. Móvil lejos." : "Pausa: levántate, bebe agua, mira lejos.") + `
+  <section class="card"><div class="timer-wrap">
+    <div class="ring${T.mode==="break"?" brk":""}"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="44"/><circle class="prg" id="prg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg>
+      <div class="center"><div class="mode">${T.mode==="focus"?"Concentración":"Descanso"}</div><div class="time" id="time">${fmt(timeLeft())}</div><div class="small muted">${T.cycles} bloque${T.cycles===1?"":"s"} hoy en esta sesión</div></div></div>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" data-act="t-toggle" id="t-toggle">${T.running?ICON.pause+" Pausar":ICON.play+" "+(T.left<T.total?"Seguir":"Empezar")}</button>
+      <button class="btn" data-act="t-reset">${ICON.reset} Reiniciar</button>
+      <button class="btn ghost" data-act="t-skip">${ICON.skip} ${T.mode==="focus"?"Ir a pausa":"Saltar pausa"}</button>
+    </div>
+    <div class="seg" role="group" aria-label="Duración">${presets.map(([f,b]) => `<button data-act="t-preset" data-f="${f}" data-b="${b}" aria-pressed="${S.settings.focus===f && S.settings.brk===b}">${f}/${b}</button>`).join("")}</div>
+  </div></section>
+
+  <section class="card"><h2>¿En qué estás?</h2>
+    <div class="row"><label class="f">Asignatura<select id="t-subj">${subjOptions(T.subjectId)}</select></label>
+    <label class="f">Tarea<select id="t-task"><option value="">Sin tarea concreta</option>${S.tasks.filter(x => !x.done && (!T.subjectId || x.subjectId===T.subjectId)).sort(byDue).map(x => `<option value="${x.id}"${x.id===T.taskId?" selected":""}>${esc(x.title)}</option>`).join("")}</select></label></div>
+    ${t ? `<div class="row"><button class="btn sm" data-act="t-done-task">${ICON.check} Marcar «${esc(t.title.length>30?t.title.slice(0,29)+"…":t.title)}» como hecha</button></div>`:""}
+  </section>
+
+  <section class="card"><div class="card-h"><h2>Aparcadero</h2><span class="muted small">se guarda en Mente</span></div>
+    <p class="small muted">¿Te viene algo a la cabeza que no es esto? Apúntalo aquí y vuelve. Ya lo mirarás en la pausa.</p>
+    <div class="row"><input type="text" id="park" placeholder="Ej.: contestar al grupo de Teoría Política" style="flex:1"><button class="btn" data-act="park">Aparcar</button></div>
+    ${parked.length ? `<ul class="small muted" style="margin:0;padding-left:18px">${parked.map(p => `<li>${esc(p)}</li>`).join("")}</ul>`:""}
+  </section>
+
+  ${Object.keys(bySub).length ? `<section class="card quiet"><div class="eyebrow">Hoy por asignatura</div><div class="row">${Object.entries(bySub).map(([k,m]) => `<span class="chip"><span class="dot" style="background:${subjColor(k)}"></span>${esc(subjName(k))} · ${m} min</span>`).join("")}</div></section>`:""}`;
+}
+function paintTimer(){
+  const left = timeLeft(), el = $("#time"), prg = $("#prg");
+  if (el) el.textContent = fmt(left);
+  if (prg) prg.setAttribute("stroke-dashoffset", String(276.46 * (1 - left / (T.total||1))));
+  document.title = T.running ? fmt(left) + (T.mode==="focus" ? " · Foco" : " · Pausa") : "Segunda Mente FPE";
+}
+let wake = null;
+async function keepAwake(on){
+  try { if (on && "wakeLock" in navigator && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } else if (!on && wake) { await wake.release(); wake = null; } } catch(e){ wake = null; }
+}
+function chime(){
+  try { const A = new (window.AudioContext||window.webkitAudioContext)(); [660, 880, 990].forEach((f,i) => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; o.type = "sine"; g.gain.setValueAtTime(0.0001, A.currentTime + i*.18); g.gain.exponentialRampToValueAtTime(0.18, A.currentTime + i*.18 + .02); g.gain.exponentialRampToValueAtTime(0.0001, A.currentTime + i*.18 + .5); o.connect(g).connect(A.destination); o.start(A.currentTime + i*.18); o.stop(A.currentTime + i*.18 + .55); }); } catch(e){}
+}
+function setMode(mode){
+  T.mode = mode; T.total = (mode === "focus" ? S.settings.focus : S.settings.brk) * 60; T.left = T.total; T.running = false; T.endAt = 0; saveTimer();
+}
+function finishBlock(auto){
+  if (T.mode === "focus"){
+    const min = Math.round((T.total - timeLeft())/60) || (auto ? Math.round(T.total/60) : 0);
+    if (min >= 1){ S.sessions.push({id:uid(), subjectId:T.subjectId||"", taskId:T.taskId||"", min, ts:Date.now()}); trim(); save(); }
+    T.cycles++; setMode("break"); toast(auto ? "Bloque terminado. Te has ganado la pausa." : "Bloque guardado.");
+  } else { setMode("focus"); toast("Pausa terminada. ¿Otro bloque?"); }
+  if (auto) chime();
+  keepAwake(false);
+  if (view === "foco") render();
+}
+setInterval(() => {
+  if (!T.running) return;
+  if (timeLeft() <= 0) { finishBlock(true); return; }
+  if (view === "foco") paintTimer(); else document.title = fmt(timeLeft()) + (T.mode==="focus" ? " · Foco" : " · Pausa");
+}, 1000);
+
+/* ---------- PLAN ---------- */
+let planFilter = "", planEdit = false, showDone = false;
+function vPlan(){
+  const list = S.tasks.filter(t => !planFilter || t.subjectId === planFilter);
+  const pend = list.filter(t => !t.done).sort(byDue), done = list.filter(t => t.done).sort((a,b) => (b.doneAt||0)-(a.doneAt||0));
+  const g = {late:[], week:[], later:[], none:[]};
+  pend.forEach(t => { if (!t.due) g.none.push(t); else { const n = dueInfo(t.due).n; (n < 0 ? g.late : n <= 7 ? g.week : g.later).push(t); } });
+  const block = (title, arr) => arr.length ? `<div class="group-h">${title}</div><div class="tasks">${arr.map(t => taskRow(t, {split:true, del:true})).join("")}</div>` : "";
+  return header("Plan", termInfo() + " · " + pend.length + " pendientes") + `
+  <section class="card"><div class="card-h"><h2>Asignaturas</h2><button class="btn ghost sm" data-act="plan-edit">${planEdit?"Listo":"Editar"}</button></div>
+    ${planEdit ? `<div style="display:flex;flex-direction:column;gap:8px">${S.subjects.map(s => `<div class="subj-edit" data-sid="${s.id}">
+        <button class="color-btn" style="background:${s.color}" data-act="subj-color" aria-label="Cambiar color de ${esc(s.name)}"></button>
+        <input type="text" value="${esc(s.name)}" data-field="name" aria-label="Nombre">
+        <input type="number" min="0" max="12" step="1" value="${s.ects||""}" placeholder="ECTS" data-field="ects" aria-label="Créditos ECTS">
+        <button class="icon-btn" data-act="subj-del" aria-label="Borrar ${esc(s.name)}">${ICON.trash}</button></div>`).join("")}
+        <div class="row"><input type="text" id="new-subj" placeholder="Nueva asignatura" style="flex:1"><button class="btn" data-act="subj-add">Añadir</button></div></div>`
+    : `<div class="row"><button class="chip" data-act="plan-filter" data-v="" aria-pressed="${!planFilter}">Todas</button>${S.subjects.map(s => {
+        const n = S.tasks.filter(t => t.subjectId===s.id && !t.done).length;
+        return `<button class="chip" data-act="plan-filter" data-v="${s.id}" aria-pressed="${planFilter===s.id}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)}${n?` <span class="muted">${n}</span>`:""}</button>`; }).join("")}</div>`}
+  </section>
+
+  <section class="card"><h2>Nueva tarea</h2>
+    <input type="text" id="nt-title" placeholder="Ej.: Leer capítulo 3 de Rawls, problemas tema 4, ensayo sobre Hobbes…">
+    <div class="row">
+      <label class="f">Asignatura<select id="nt-subj">${subjOptions(planFilter)}</select></label>
+      <label class="f">Tipo<select id="nt-type">${Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
+    </div>
+    <div class="row">
+      <label class="f">Fecha límite<input type="date" id="nt-due"></label>
+      <label class="f">Tiempo estimado (min)<input type="number" id="nt-est" min="5" step="5" placeholder="30"></label>
+    </div>
+    <div class="row"><button class="btn primary" data-act="add-task">Añadir</button><span class="small muted">Si es grande, trocéala: nada de más de 90 minutos.</span></div>
+  </section>
+
+  <section class="card"><div class="card-h"><h2>Pendiente</h2>${sample?`<span class="small muted">El icono de líneas trocea una tarea con IA</span>`:""}</div>
+    ${pend.length ? block("Atrasadas", g.late) + block("Próximos 7 días", g.week) + block("Más adelante", g.later) + block("Sin fecha", g.none) : `<p class="empty">Nada pendiente${planFilter?" en esta asignatura":""}. Añade entregas, exámenes y lecturas para verlas por fecha.</p>`}
+    ${done.length ? `<button class="btn ghost sm" data-act="show-done" style="align-self:flex-start">${showDone?"Ocultar":"Ver"} hechas (${done.length})</button>${showDone?`<div class="tasks">${done.slice(0,40).map(t => taskRow(t,{del:true})).join("")}</div>`:""}`:""}
+  </section>`;
+}
+
+/* ---------- MENTE ---------- */
+let noteKind = "apunte", noteFilter = "", chat = [], chatBusy = false, chatCtl = null;
+function vMente(){
+  const notes = S.notes.filter(n => !noteFilter || n.kind === noteFilter).sort((a,b) => (b.pinned?1:0)-(a.pinned?1:0) || b.ts - a.ts);
+  const counts = {}; S.notes.forEach(n => counts[n.kind] = (counts[n.kind]||0)+1);
+  return header("Mente", "Todo lo que no tiene que estar en tu cabeza") + `
+  <section class="card"><h2>Captura rápida</h2>
+    <div class="seg" role="group" aria-label="Tipo de nota">${Object.entries(KINDS).map(([k,v]) => `<button data-act="note-kind" data-v="${k}" aria-pressed="${noteKind===k}">${v}</button>`).join("")}</div>
+    <textarea id="note-text" placeholder="${noteKind==="descarga"?"Escribe todo lo que te ronda, sin orden ni filtro. Luego decides qué hacer con cada cosa.":noteKind==="duda"?"Ej.: ¿Por qué el equilibrio de Nash no es siempre eficiente?":noteKind==="idea"?"Ej.: Relacionar el velo de la ignorancia con el seguro de desempleo para el ensayo":"Un concepto, una definición, una conexión entre temas…"}"></textarea>
+    <div class="row"><label class="f" style="max-width:260px">Asignatura<select id="note-subj">${subjOptions("")}</select></label>
+    <button class="btn primary" data-act="add-note" style="align-self:flex-end">Guardar</button><span class="small muted" style="align-self:flex-end">Ctrl/⌘ + Enter</span></div>
+  </section>
+
+  ${sample ? `<section class="card"><div class="card-h"><h2>Habla con tu segunda mente</h2>${chat.length?`<button class="btn ghost sm" data-act="chat-clear">Nueva conversación</button>`:""}</div>
+    <p class="small muted">Conoce tus tareas y fechas. Pídele un plan, que te explique un concepto, que te pregunte para repasar o simplemente desahógate.</p>
+    ${chat.length ? `<div class="chat" aria-live="polite">${chat.map(m => `<div class="msg ${m.role==="user"?"me":"ai"}">${esc(m.content)}</div>`).join("")}</div>` :
+      `<div class="row">${["Hazme un plan realista para hoy","Estoy agobiado/a con los exámenes","Pregúntame para repasar Microeconomía","Explícame la paradoja de Arrow"].map(s => `<button class="chip" data-act="chat-sug" data-q="${esc(s)}">${esc(s)}</button>`).join("")}</div>`}
+    <div class="row"><input type="text" id="chat-in" placeholder="Escribe aquí…" style="flex:1" ${chatBusy?"disabled":""}><button class="btn primary" data-act="chat-send" ${chatBusy?"disabled":""}>${chatBusy?"Pensando…":"Enviar"}</button></div>
+  </section>` : ""}
+
+  <section class="card"><div class="card-h"><h2>Tus notas</h2>
+    <div class="row"><button class="chip" data-act="note-filter" data-v="" aria-pressed="${!noteFilter}">Todas ${S.notes.length}</button>${Object.entries(KINDS).map(([k,v]) => counts[k] ? `<button class="chip" data-act="note-filter" data-v="${k}" aria-pressed="${noteFilter===k}">${v} ${counts[k]}</button>` : "").join("")}</div></div>
+    ${notes.length ? `<div>${notes.map(n => `<div class="note" data-nid="${n.id}">
+      <div class="sub"><span class="pill ${n.kind}">${KINDS[n.kind]}</span>${n.subjectId?`<span class="row" style="gap:5px"><span class="dot" style="background:${subjColor(n.subjectId)}"></span>${esc(subjName(n.subjectId))}</span>`:""}<span>${ago(n.ts)}</span>${n.pinned?`<span>· fijada</span>`:""}</div>
+      <div class="txt">${esc(n.text)}</div>
+      <div class="row"><button class="btn ghost sm" data-act="note-task">${ICON.arrow} Convertir en tarea</button>
+        <button class="btn ghost sm" data-act="note-pin">${ICON.pin} ${n.pinned?"Desfijar":"Fijar"}</button>
+        <button class="btn ghost sm" data-act="note-del">${ICON.trash} ${n.kind==="descarga"?"Soltar":"Borrar"}</button></div></div>`).join("")}</div>`
+      : `<p class="empty">${noteFilter ? "No hay notas de este tipo." : "Aún no hay notas. Las dudas para clase, ideas para ensayos y lo que aparques en Foco acabará aquí."}</p>`}
+  </section>`;
+}
+function ago(ts){
+  const m = Math.round((Date.now()-ts)/60000);
+  if (m < 1) return "ahora"; if (m < 60) return "hace " + m + " min";
+  const h = Math.round(m/60); if (h < 24) return "hace " + h + " h";
+  const d = new Date(ts); return d.getDate() + " " + MON[d.getMonth()].slice(0,3);
+}
+function context(){
+  const pend = S.tasks.filter(t => !t.done).sort(byDue).slice(0,25).map(t => `- ${t.title} [${subjName(t.subjectId)}; ${TYPES[t.type]||"Tarea"}${t.due?"; vence "+t.due:""}${t.est?"; ~"+t.est+" min":""}${t.today?"; elegida para hoy":""}]`).join("\n");
+  const ck = todayCheck();
+  return `Contexto del estudiante (no lo repitas literalmente):
+- Estudia el Grado en Filosofía, Política y Economía (FPE) en la Universitat Pompeu Fabra (Barcelona), organizado por trimestres. Hoy es ${dkey()} (${DOW[new Date().getDay()]}). ${termInfo()}.
+- Asignaturas: ${S.subjects.map(s => s.name).join(", ") || "sin definir"}.
+- Energía de hoy: ${ck?.energy || "no indicada"}. Minutos de foco hoy: ${minutesOn(dkey())}.
+- Tareas pendientes:
+${pend || "(ninguna)"}`;
+}
+const COACH = `Eres la "segunda mente" de un estudiante universitario: un compañero de estudio cálido, directo y práctico. Responde siempre en español, breve (máximo ~150 palabras salvo que pida una explicación), sin listas largas. Prioriza: reducir agobio, elegir UNA siguiente acción concreta y pequeña, y motivar sin frases vacías. Si explica conceptos, usa ejemplos de filosofía, política o economía. Si detectas malestar serio o persistente, sugiere con tacto hablar con alguien de confianza o con el servicio de atención psicológica de la universidad. No inventes tareas ni fechas que no estén en el contexto.`;
+async function sendChat(text){
+  if (!sample || chatBusy || !text.trim()) return;
+  chat.push({role:"user", content:text.trim()}); chat.push({role:"assistant", content:"…"}); chatBusy = true; render();
+  const msgs = chat.slice(0,-1).map((m,i) => i === 0 ? {role:"user", content: COACH + "\n\n" + context() + "\n\nMensaje del estudiante:\n" + m.content} : m);
+  chatCtl = new AbortController();
+  try {
+    const r = await sample(msgs, {cache:false, signal:chatCtl.signal, onText:({text}) => { chat[chat.length-1].content = text; const b = document.querySelectorAll(".msg.ai"); if (b.length) { b[b.length-1].textContent = text; const c = $(".chat"); if (c) c.scrollTop = c.scrollHeight; } }});
+    chat[chat.length-1].content = r.text || "(sin respuesta)";
+  } catch(e){
+    chat[chat.length-1].content = e && e.code === "rate_limited" ? "Demasiadas preguntas seguidas. Espera un minuto y vuelve a intentarlo." : e && e.code === "not_granted" ? "No has dado permiso para usar a Claude desde esta página. Puedes activarlo en los permisos del artefacto." : (e && e.text) || "No he podido responder ahora. Prueba de nuevo en un momento.";
+  }
+  chatBusy = false; if (view === "mente") { render(); const i = $("#chat-in"); if (i) i.focus(); }
+}
+async function splitTask(id){
+  const t = S.tasks.find(x => x.id === id); if (!t || !sample) return;
+  toast("Troceando «" + t.title.slice(0,40) + "»…");
+  try {
+    const r = await sample.json(`Divide esta tarea de un estudiante de Filosofía, Política y Economía en 3 a 5 pasos pequeños, concretos y accionables (cada uno de 10 a 45 minutos), en español. Tarea: "${t.title}" (asignatura: ${subjName(t.subjectId)}; tipo: ${TYPES[t.type]||"Tarea"}). Responde SOLO con JSON: {"steps":[{"title":"...","min":25}]}`, {modelTier:"quick"});
+    const steps = (r && Array.isArray(r.steps) ? r.steps : []).slice(0,6);
+    if (!steps.length) throw 0;
+    const at = S.tasks.indexOf(t);
+    const news = steps.map(s => ({id:uid(), title: String(s.title||"").slice(0,140), subjectId:t.subjectId, type:t.type==="examen"?"tarea":t.type, due:t.due, est:Math.min(90, Math.max(5, parseInt(s.min)||25)), done:false, today:false, created:Date.now()}));
+    S.tasks.splice(at+1, 0, ...news); save(); render(); toast("Añadidos " + news.length + " pasos debajo de la tarea.");
+  } catch(e){ toast(e && e.code === "rate_limited" ? "Espera un poco antes de volver a trocear." : "No he podido trocearla ahora."); }
+}
+
+/* ---------- CALMA ---------- */
+let br = {on:false, pattern:"caja", t:null, phase:""};
+const PATTERNS = { caja:[["Inhala",4,1],["Mantén",4,1],["Exhala",4,.62],["Mantén",4,.62]], "478":[["Inhala",4,1],["Mantén",7,1],["Exhala",8,.62]] };
+function vCalma(){
+  const ctl = S.control || [];
+  return header("Calma", "Cuando todo pesa, vuelve aquí") + `
+  <section class="card"><h2>Plan anti-agobio</h2><p class="small muted">Tres pasos, unos 15 minutos. No tienes que resolverlo todo: solo lo siguiente.</p>
+    <div class="steps">
+      <div class="step"><div class="body"><b>Respira un minuto</b><div class="small muted">Baja las pulsaciones antes de decidir nada.</div></div><button class="btn sm" data-act="br-start">Empezar</button></div>
+      <div class="step"><div class="body"><b>Vacía la cabeza</b><div class="small muted">Escribe todo lo pendiente en una descarga mental.</div></div><button class="btn sm" data-act="go-dump">Escribir</button></div>
+      <div class="step"><div class="body"><b>Haz 10 minutos de lo más pequeño</b><div class="small muted">${smallest() ? "Propuesta: «" + esc(smallest().title) + "»" : "Elige cualquier cosa que se pueda empezar ya."}</div></div><button class="btn sm primary" data-act="ten-min">10 min</button></div>
+    </div></section>
+
+  <section class="card"><div class="card-h"><h2>Respiración</h2>
+    <div class="seg" role="group" aria-label="Patrón"><button data-act="br-pattern" data-v="caja" aria-pressed="${br.pattern==="caja"}">Caja 4·4·4·4</button><button data-act="br-pattern" data-v="478" aria-pressed="${br.pattern==="478"}">4·7·8</button></div></div>
+    <div class="breath"><div class="orb" id="orb"><span id="orb-t">${br.on ? br.phase : "Listo"}</span></div>
+      <button class="btn ${br.on?"":"primary"}" data-act="${br.on?"br-stop":"br-start"}">${br.on?"Parar":"Empezar a respirar"}</button></div>
+  </section>
+
+  <section class="card"><h2>Lo que depende de mí</h2>
+    <p class="small muted">Epicteto separaba lo que depende de nosotros de lo que no. Escribe lo que te preocupa y clasifícalo: lo primero se convierte en acción, lo segundo se suelta.</p>
+    <div class="row"><input type="text" id="ctl-in" placeholder="Ej.: que el examen de Lógica sea difícil" style="flex:1"></div>
+    <div class="row"><button class="btn" data-act="ctl-add" data-v="si">Depende de mí</button><button class="btn" data-act="ctl-add" data-v="no">No depende de mí</button></div>
+    ${ctl.length ? `<div class="cols">
+      <div class="col"><div class="eyebrow">Depende de mí</div><ul>${ctl.filter(c => c.v==="si").map(c => `<li>${esc(c.text)} <button class="btn ghost sm" data-act="ctl-task" data-id="${c.id}">Hacer tarea</button></li>`).join("") || `<li class="muted">—</li>`}</ul></div>
+      <div class="col"><div class="eyebrow">No depende de mí</div><ul>${ctl.filter(c => c.v==="no").map(c => `<li>${esc(c.text)} <button class="btn ghost sm" data-act="ctl-drop" data-id="${c.id}">Lo suelto</button></li>`).join("") || `<li class="muted">—</li>`}</ul></div>
+    </div>`:""}
+  </section>
+
+  <section class="card quiet"><p class="small">Si el agobio dura semanas, no duermes o nada te apetece, no es falta de organización: habla con alguien de confianza o pide cita en el servicio de atención psicológica de la UPF. Pedir ayuda también es estudiar bien.</p></section>`;
+}
+function smallest(){ return S.tasks.filter(t => !t.done).sort((a,b) => (a.est||999)-(b.est||999) || byDue(a,b))[0]; }
+function breathStep(i){
+  if (!br.on) return;
+  const P = PATTERNS[br.pattern], [label, secs, scale] = P[i % P.length];
+  br.phase = label;
+  const orb = $("#orb"), t = $("#orb-t");
+  if (orb){ orb.style.transitionDuration = secs + "s"; orb.style.transform = "scale(" + scale + ")"; }
+  let left = secs; if (t) t.textContent = label + " " + left;
+  const tick = setInterval(() => { left--; const tt = $("#orb-t"); if (tt && left > 0) tt.textContent = label + " " + left; }, 1000);
+  br.t = setTimeout(() => { clearInterval(tick); breathStep(i+1); }, secs*1000);
+  br.tick = tick;
+}
+function breathStop(){ br.on = false; clearTimeout(br.t); clearInterval(br.tick); br.phase = ""; }
+
+/* ---------- settings modal ---------- */
+let resetArm = false;
+function openSettings(){
+  $("#modal-root").innerHTML = `<div class="modal" data-act="modal-bg"><div class="card" role="dialog" aria-modal="true" aria-label="Ajustes">
+    <div class="card-h"><h2>Ajustes</h2><button class="btn ghost sm" data-act="modal-close">Cerrar</button></div>
+    <label class="f">Nombre<input type="text" id="s-name" value="${esc(S.name)}"></label>
+    <div class="row"><label class="f">Inicio del trimestre<input type="date" id="s-term" value="${esc(S.settings.termStart)}"></label></div>
+    <div class="row"><label class="f">Bloque de foco (min)<input type="number" id="s-focus" min="5" max="120" value="${S.settings.focus}"></label><label class="f">Pausa (min)<input type="number" id="s-brk" min="1" max="30" value="${S.settings.brk}"></label></div>
+    <button class="btn primary" data-act="s-save" style="align-self:flex-start">Guardar ajustes</button>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <div class="eyebrow">Copia de seguridad</div>
+    <p class="small muted"><span data-sync class="sync"></span><br>Copia tus datos como texto para guardarlos o pasarlos a otro dispositivo; pega uno para restaurarlo.</p>
+    <div class="row"><button class="btn sm" data-act="s-export">Copiar mis datos</button></div>
+    <textarea id="s-import" placeholder="Pega aquí una copia para restaurar"></textarea>
+    <div class="row"><button class="btn sm" data-act="s-import">Restaurar copia</button>
+      <button class="btn sm" data-act="s-reset" style="color:var(--danger)">${resetArm?"Pulsa otra vez para borrar todo":"Borrar todos los datos"}</button></div>
+  </div></div>`;
+  paintSync();
+}
+const closeModal = () => { $("#modal-root").innerHTML = ""; resetArm = false; };
+
+/* ---------- actions ---------- */
+function addTask(o){ const t = Object.assign({id:uid(), title:"", subjectId:"", type:"tarea", due:"", est:0, done:false, today:false, created:Date.now()}, o); S.tasks.push(t); save(); return t; }
+function startFocusOn(task, minutes){
+  T.taskId = task ? task.id : ""; T.subjectId = task ? (task.subjectId||"") : T.subjectId;
+  setMode("focus");
+  if (minutes){ T.total = minutes*60; T.left = T.total; }
+  T.running = true; T.endAt = Date.now() + T.left*1000; saveTimer(); keepAwake(true);
+  go("foco");
+}
+document.addEventListener("click", e => {
+  const go_ = e.target.closest("[data-go]"); if (go_ && !e.target.closest("[data-act]")) { if (S.onboarded) go(go_.dataset.go); return; }
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const act = a.dataset.act;
+  const row = a.closest("[data-id]"), tid = a.dataset.id || row?.dataset.id;
+  const task = tid ? S.tasks.find(t => t.id === tid) : null;
+  switch(act){
+    case "ob-pick": { const n = a.dataset.name; obPicked = obPicked.includes(n) ? obPicked.filter(x => x !== n) : [...obPicked, n]; S.name = $("#ob-name").value.trim(); render(); break; }
+    case "ob-add": { const v = $("#ob-custom").value.trim(); if (v && !obPicked.includes(v)) obPicked.push(v); S.name = $("#ob-name").value.trim(); render(); setTimeout(() => $("#ob-custom")?.focus()); break; }
+    case "ob-done": {
+      S.name = $("#ob-name").value.trim(); S.settings.termStart = $("#ob-term").value || S.settings.termStart;
+      const existing = new Set(S.subjects.map(s => s.name));
+      obPicked.forEach((n,i) => { if (!existing.has(n)) S.subjects.push({id:uid(), name:n, color:COLORS[(S.subjects.length) % COLORS.length], ects:6}); });
+      S.onboarded = true; save(); go("hoy"); toast(S.subjects.length ? "Listo. Ahora apunta tus próximas entregas en Plan." : "Listo. Puedes añadir asignaturas en Plan."); break; }
+    case "settings": openSettings(); break;
+    case "modal-close": closeModal(); break;
+    case "modal-bg": if (e.target === a) closeModal(); break;
+    case "s-save": {
+      S.name = $("#s-name").value.trim(); S.settings.termStart = $("#s-term").value || S.settings.termStart;
+      S.settings.focus = Math.min(120, Math.max(5, parseInt($("#s-focus").value)||25)); S.settings.brk = Math.min(30, Math.max(1, parseInt($("#s-brk").value)||5));
+      if (!T.running) setMode(T.mode); save(); closeModal(); render(); toast("Ajustes guardados"); break; }
+    case "s-export": {
+      const txt = JSON.stringify(S);
+      const ta = $("#s-import");
+      navigator.clipboard?.writeText(txt).then(() => toast("Datos copiados al portapapeles"), () => { ta.value = txt; ta.select(); toast("Selecciona y copia el texto"); }) ?? (ta.value = txt, ta.select());
+      break; }
+    case "s-import": {
+      try { const d = JSON.parse($("#s-import").value); if (!d || !Array.isArray(d.tasks)) throw 0; S = Object.assign(defaultState(), d); S.onboarded = true; save(); closeModal(); render(); toast("Copia restaurada"); }
+      catch(err){ toast("Ese texto no es una copia válida de Segunda Mente."); } break; }
+    case "s-reset": {
+      if (!resetArm){ resetArm = true; a.textContent = "Pulsa otra vez para borrar todo"; break; }
+      S = defaultState(); save(); obPicked = []; closeModal(); go("hoy"); toast("Datos borrados"); break; }
+    case "energy": S.checkins[dkey()] = {energy:a.dataset.v, ts:Date.now()}; trim(); save(); render(); break;
+    case "next-quote": qIdx = (qIdx+1) % QUOTES.length; render(); break;
+    case "toggle-task": if (task){ task.done = !task.done; task.doneAt = task.done ? Date.now() : 0; save(); render(); if (task.done) toast(CHEERS[Math.floor(Math.random()*CHEERS.length)]); } break;
+    case "today-task": if (task){ task.today = !task.today; save(); render(); } break;
+    case "del-task": if (task){ S.tasks = S.tasks.filter(t => t !== task); save(); render(); toast("Tarea borrada"); } break;
+    case "focus-task": if (task) startFocusOn(task); break;
+    case "split-task": if (task) splitTask(task.id); break;
+    case "t-toggle":
+      if (T.running){ T.left = timeLeft(); T.running = false; keepAwake(false); }
+      else { T.running = true; T.endAt = Date.now() + T.left*1000; keepAwake(true); }
+      saveTimer(); render(); break;
+    case "t-reset": setMode(T.mode); keepAwake(false); render(); break;
+    case "t-skip": finishBlock(false); break;
+    case "t-preset": S.settings.focus = +a.dataset.f; S.settings.brk = +a.dataset.b; save(); if (!T.running) setMode(T.mode); render(); break;
+    case "t-done-task": { const t = S.tasks.find(x => x.id === T.taskId); if (t){ t.done = true; t.doneAt = Date.now(); T.taskId = ""; saveTimer(); save(); render(); toast(CHEERS[Math.floor(Math.random()*CHEERS.length)]); } break; }
+    case "park": { const v = $("#park").value.trim(); if (!v) break; S.notes.push({id:uid(), kind:"descarga", text:v, subjectId:"", ts:Date.now()}); parked.push(v); save(); render(); setTimeout(() => $("#park")?.focus()); break; }
+    case "plan-edit": planEdit = !planEdit; render(); break;
+    case "plan-filter": planFilter = a.dataset.v; render(); break;
+    case "show-done": showDone = !showDone; render(); break;
+    case "subj-add": { const v = $("#new-subj").value.trim(); if (!v) break; S.subjects.push({id:uid(), name:v, color:COLORS[S.subjects.length % COLORS.length], ects:6}); save(); render(); setTimeout(() => $("#new-subj")?.focus()); break; }
+    case "subj-del": { const sid = a.closest("[data-sid]").dataset.sid; S.subjects = S.subjects.filter(s => s.id !== sid); S.tasks.forEach(t => { if (t.subjectId === sid) t.subjectId = ""; }); if (planFilter === sid) planFilter = ""; save(); render(); break; }
+    case "subj-color": { const s = subj(a.closest("[data-sid]").dataset.sid); s.color = COLORS[(COLORS.indexOf(s.color)+1) % COLORS.length]; save(); render(); break; }
+    case "add-task": {
+      const title = $("#nt-title").value.trim(); if (!title){ $("#nt-title").focus(); toast("Escribe primero qué tienes que hacer."); break; }
+      addTask({title, subjectId:$("#nt-subj").value, type:$("#nt-type").value, due:$("#nt-due").value, est:parseInt($("#nt-est").value)||0});
+      render(); toast("Tarea añadida"); setTimeout(() => $("#nt-title")?.focus()); break; }
+    case "note-kind": noteKind = a.dataset.v; { const keep = $("#note-text").value; render(); $("#note-text").value = keep; $("#note-text").focus(); } break;
+    case "note-filter": noteFilter = a.dataset.v; render(); break;
+    case "add-note": {
+      const raw = $("#note-text").value.trim(); if (!raw) break;
+      const parts = noteKind === "descarga" ? raw.split(/\n+/).map(s => s.replace(/^[-*•]\s*/,"").trim()).filter(Boolean) : [raw];
+      parts.forEach((p,i) => S.notes.push({id:uid(), kind:noteKind, text:p, subjectId:$("#note-subj").value, ts:Date.now()+i}));
+      save(); render(); toast(noteKind === "descarga" ? "Fuera de tu cabeza. Ahora decide qué hacer con cada cosa." : "Nota guardada"); break; }
+    case "note-pin": { const n = S.notes.find(x => x.id === a.closest("[data-nid]").dataset.nid); n.pinned = !n.pinned; save(); render(); break; }
+    case "note-del": { const id = a.closest("[data-nid]").dataset.nid, n = S.notes.find(x => x.id === id); S.notes = S.notes.filter(x => x.id !== id); save(); render(); toast(n?.kind === "descarga" ? "Soltado." : "Nota borrada"); break; }
+    case "note-task": { const id = a.closest("[data-nid]").dataset.nid, n = S.notes.find(x => x.id === id); addTask({title:n.text.slice(0,140), subjectId:n.subjectId||""}); if (n.kind === "descarga") S.notes = S.notes.filter(x => x.id !== id); save(); render(); toast("Ahora está en Plan"); break; }
+    case "chat-sug": sendChat(a.dataset.q); break;
+    case "chat-send": { const i = $("#chat-in"); const v = i.value; i.value = ""; sendChat(v); break; }
+    case "chat-clear": chatCtl?.abort(); chat = []; chatBusy = false; render(); break;
+    case "br-pattern": { const was = br.on; breathStop(); br.pattern = a.dataset.v; render(); if (was){ br.on = true; setTimeout(() => breathStep(0), 50); } break; }
+    case "br-start": breathStop(); br.on = true; if (view !== "calma") go("calma"); else render(); $("#orb")?.scrollIntoView({block:"center", behavior:"smooth"}); setTimeout(() => breathStep(0), 60); setTimeout(() => { if (br.on){ breathStop(); if (view === "calma") render(); toast("Un minuto hecho. ¿Siguiente paso?"); } }, 64000); break;
+    case "br-stop": breathStop(); render(); break;
+    case "go-dump": noteKind = "descarga"; go("mente"); setTimeout(() => $("#note-text")?.focus(), 50); break;
+    case "ten-min": breathStop(); startFocusOn(smallest() || null, 10); break;
+    case "ctl-add": { const v = $("#ctl-in").value.trim(); if (!v) break; S.control = S.control || []; S.control.push({id:uid(), text:v, v:a.dataset.v}); save(); render(); setTimeout(() => $("#ctl-in")?.focus()); break; }
+    case "ctl-task": { const c = S.control.find(x => x.id === a.dataset.id); addTask({title:c.text}); S.control = S.control.filter(x => x !== c); save(); render(); toast("Convertido en tarea en Plan"); break; }
+    case "ctl-drop": S.control = S.control.filter(x => x.id !== a.dataset.id); save(); render(); toast("Soltado. No era tuyo de cargar."); break;
+  }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.id === "t-subj"){ T.subjectId = t.value; const task = S.tasks.find(x => x.id === T.taskId); if (task && task.subjectId !== t.value) T.taskId = ""; saveTimer(); render(); }
+  else if (t.id === "t-task"){ T.taskId = t.value; const task = S.tasks.find(x => x.id === t.value); if (task) T.subjectId = task.subjectId || ""; saveTimer(); render(); }
+  else if (t.dataset.field && t.closest("[data-sid]")){ const s = subj(t.closest("[data-sid]").dataset.sid); if (t.dataset.field === "name" && t.value.trim()) s.name = t.value.trim(); if (t.dataset.field === "ects") s.ects = parseInt(t.value)||0; save(); }
+});
+document.addEventListener("keydown", e => {
+  const id = e.target.id;
+  if (e.key === "Escape" && $("#modal-root").innerHTML) closeModal();
+  if (e.key !== "Enter") return;
+  if (id === "note-text" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $('[data-act="add-note"]').click(); }
+  else if (id === "nt-title") { e.preventDefault(); $('[data-act="add-task"]').click(); }
+  else if (id === "park") { e.preventDefault(); $('[data-act="park"]').click(); }
+  else if (id === "chat-in") { e.preventDefault(); $('[data-act="chat-send"]').click(); }
+  else if (id === "new-subj") { e.preventDefault(); $('[data-act="subj-add"]').click(); }
+  else if (id === "ob-custom") { e.preventDefault(); $('[data-act="ob-add"]').click(); }
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden && T.running) { keepAwake(true); if (timeLeft() <= 0) finishBlock(true); } });
+
+render();
+connect();
+})();
+</script>
+</body></html>
