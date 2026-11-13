@@ -1,0 +1,12 @@
+{
+  "name": "Segunda Mente FPE",
+  "short_name": "Segunda Mente",
+  "description": "Organiza el estudio, concéntrate y no te agobies. Para FPE en la UPF.",
+  "lang": "es",
+  "start_url": "./#hoy",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f8",
+  "theme_color": "#2d55c8",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
