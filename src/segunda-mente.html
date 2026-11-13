@@ -273,6 +273,16 @@ button.chip:hover{border-color:var(--accent)}
 .fab{display:none}
 @media (max-width:899px){.fab{display:grid;position:fixed;right:max(16px, env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:16px;border:0;background:var(--accent);color:var(--accent-ink);place-items:center;z-index:25;box-shadow:0 6px 20px rgb(20 30 60 / .25)}
   .fab svg{width:24px;height:24px}}
+.chat.coach{max-height:min(56vh,520px)}
+.msg.ai a{color:var(--accent)}
+.msg ul{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.msg.ai .btn{background:var(--surface)}
+.rw-need{font-size:.75rem;color:var(--muted);display:block}
+.reward .tr{height:4px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:4px}
+.reward .tr i{display:block;height:100%;background:var(--gold)}
+.card.coach-tip{flex-direction:row;gap:12px;align-items:center;flex-wrap:wrap}
+.coach-tip p{flex:1;min-width:200px}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -316,6 +326,7 @@ const ICON = {
   repasar: svg('<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/><path d="M7 13h6"/>'),
   mente: svg('<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>'),
   progreso: svg('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+  coach: svg('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9 10h6M9 14h4"/>'),
   calma: svg('<path d="M3 12c3-4 6-4 9 0s6 4 9 0M3 17c3-4 6-4 9 0s6 4 9 0M3 7c3-4 6-4 9 0s6 4 9 0"/>'),
   more: svg('<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>'),
   settings: svg('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'),
@@ -370,7 +381,7 @@ function migrate(raw){
   const s = Object.assign(defaultState(), raw || {});
   s.settings = Object.assign(defaultSettings(), (raw && raw.settings) || {});
   ["subjects","tasks","notes","sessions","control","cards","timetable","rewards","redeemed"].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
-  ["checkins","journal","reviews","badges","goalDays"].forEach(k => { if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) s[k] = {}; });
+  ["checkins","journal","reviews","badges","goalDays","deleted"].forEach(k => { if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) s[k] = {}; });
   s.subjects.forEach(x => { if (x.weekly == null) x.weekly = 4; });
   if ((raw && raw.v || 1) < 2){
     // v1 → v2: "today" flag becomes a planned date; seed XP from history so nothing is lost
@@ -384,8 +395,13 @@ function migrate(raw){
 let S = defaultState();
 try { const raw = localStorage.getItem(LS); if (raw) S = migrate(JSON.parse(raw)); } catch(e){}
 let dbRef = null, saveT = null, syncMode = "local", downloads = null;
+const idSet = st => { const o = new Set(); ["subjects","tasks","notes","sessions","cards","timetable","rewards","control"].forEach(k => (st[k]||[]).forEach(x => x && x.id && o.add(x.id))); return o; };
+let known = idSet(S);
 function save(){
   S.updated = Date.now();
+  const now = idSet(S); S.deleted = S.deleted || {};
+  known.forEach(id => { if (!now.has(id)) S.deleted[id] = S.updated; }); known = now;
+  scheduleGist();
   try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){}
   if (dbRef){ clearTimeout(saveT); saveT = setTimeout(pushRemote, 600); }
 }
@@ -470,13 +486,13 @@ async function connect(){
         const snap = await ref.get();
         const remote = snap.exists ? snap.data() : null;
         dbRef = ref; syncMode = "cloud";
-        if (remote && (remote.updated||0) > (S.updated||0)) { S = migrate(JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS, JSON.stringify(S));}catch(e){} if ((remote.v||1) < 2) save(); render(); }
+        if (remote && (remote.updated||0) > (S.updated||0)) { S = migrate(JSON.parse(JSON.stringify(remote))); known = idSet(S); try{localStorage.setItem(LS, JSON.stringify(S));}catch(e){} if ((remote.v||1) < 2) save(); render(); }
         else if (S.updated) pushRemote();
         ref.onSnapshot(s => {
           if (!s.exists || s.metadata.hasPendingWrites) return;
           const d = s.data();
           if ((d.updated||0) > (S.updated||0)) {
-            S = migrate(JSON.parse(JSON.stringify(d)));
+            S = migrate(JSON.parse(JSON.stringify(d))); known = idSet(S);
             try{localStorage.setItem(LS, JSON.stringify(S));}catch(e){}
             const a = document.activeElement;
             if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) render();
@@ -492,9 +508,9 @@ async function connect(){
 }
 
 /* ================= routing ================= */
-const VIEWS = ["hoy","foco","plan","repasar","mente","progreso","calma"];
-const NAV = [["hoy","Hoy"],["foco","Foco"],["plan","Plan"],["repasar","Repasar"],["mente","Mente"],["progreso","Progreso"],["calma","Calma"]];
-const MOBILE = ["hoy","foco","plan","mente"];
+const VIEWS = ["hoy","foco","plan","coach","repasar","mente","progreso","calma"];
+const NAV = [["hoy","Hoy"],["foco","Foco"],["plan","Plan"],["coach","Coach"],["repasar","Repasar"],["mente","Mente"],["progreso","Progreso"],["calma","Calma"]];
+const MOBILE = ["hoy","foco","plan","coach"];
 let view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "hoy";
 function go(v){ view = v; if (location.hash.slice(1) !== v) { try{ history.replaceState(null,"","#"+v);}catch(e){ location.hash = v; } } closeModal(); render(); window.scrollTo(0,0); }
 window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS.includes(v) && v !== view){ view = v; render(); } });
@@ -557,17 +573,19 @@ function renderRail(){
 function render(){
   applyTheme();
   renderRail();
+  const fab = $(".fab"); if (fab) fab.hidden = view === "coach" || !S.onboarded;
   const el = $("#view");
   if (!S.onboarded) { el.innerHTML = vOnboard(); return; }
-  el.innerHTML = ({hoy:vHoy, foco:vFoco, plan:vPlan, repasar:vRepasar, mente:vMente, progreso:vProgreso, calma:vCalma})[view]();
+  el.innerHTML = ({hoy:vHoy, coach:vCoach, foco:vFoco, plan:vPlan, repasar:vRepasar, mente:vMente, progreso:vProgreso, calma:vCalma})[view]();
   if (view === "foco") paintTimer();
-  if (view === "mente") { const c = $(".chat"); if (c) c.scrollTop = c.scrollHeight; }
+  if (view === "mente" || view === "coach") { const c = $(".chat"); if (c) c.scrollTop = c.scrollHeight; }
   paintSync();
 }
 function paintSync(){
   document.querySelectorAll("[data-sync]").forEach(n => {
-    n.className = "sync" + (syncMode === "cloud" ? " cloud" : "");
-    n.innerHTML = "<i></i>" + (syncMode === "cloud" ? "Guardado en tu cuenta de Claude" : "Guardado en este navegador");
+    const gist = !IN_CLAUDE && sync.gistId;
+    n.className = "sync" + (syncMode === "cloud" || (gist && !syncErr) ? " cloud" : "");
+    n.innerHTML = "<i></i>" + (syncMode === "cloud" ? "Guardado en tu cuenta de Claude" : gist ? (syncErr ? "Sincronización pendiente" : "Sincronizado entre dispositivos") : "Guardado solo en este navegador");
   });
 }
 function header(title, meta, extra=""){
@@ -650,6 +668,8 @@ function vHoy(){
     </div></div>
     <div class="row"><button class="btn primary" data-act="${open[0] ? "focus-task" : "quick-focus"}" ${open[0]?`data-id="${open[0].id}"`:""}>${ICON.play} ${open[0] ? "Empezar con «" + esc(clip(open[0].title, 30)) + "»" : "Empezar un bloque de " + S.settings.focus + " min"}</button></div>
   </section>
+
+  <section class="card quiet coach-tip">${ICON.coach.replace("<svg",'<svg style="width:22px;height:22px;color:var(--accent);flex:none"')}<p class="small"><b>Tu coach:</b> ${coachBrief()}</p><button class="btn sm" data-go="coach">Hablar con el coach</button></section>
 
   <section class="card"><div class="card-h"><h2>¿Cómo llegas hoy?</h2>${ck?`<span class="muted small">Puedes cambiarlo</span>`:""}</div>
     <div class="energy" role="group" aria-label="Energía de hoy">
@@ -1150,7 +1170,7 @@ function vProgreso(){
     <p class="small muted">${lv.into} de ${lv.need} XP para el nivel ${lv.n+1}. Ganas 1 XP por minuto de foco, 10 por tarea, 1 por tarjeta y 20 por cumplir la meta diaria. Cada 5 XP es una moneda.</p></section>
 
   <section class="card"><div class="card-h"><h2>Recompensas</h2><span class="small muted">Cánjealas sin culpa: te las has ganado</span></div>
-    <div>${S.rewards.map(r => `<div class="reward" data-rid="${r.id}"><span class="n">${esc(r.text)}</span><span class="coin">${r.cost}</span><button class="btn sm ${coins()>=r.cost?"primary":""}" data-act="redeem" ${coins()>=r.cost?"":"disabled"}>Canjear</button><button class="icon-btn" data-act="reward-del" aria-label="Borrar recompensa">${ICON.trash}</button></div>`).join("") || `<p class="empty">Añade cosas que te apetezcan de verdad.</p>`}</div>
+    <div>${S.rewards.map(r => `<div class="reward" data-rid="${r.id}"><span class="n">${esc(r.text)}<span class="rw-need">${rewardNeed(r) ? "Te faltan " + (r.cost - coins()) + " monedas: unos " + fmtMin(rewardNeed(r)) + " de estudio" : "Ya puedes canjearla"}</span><span class="tr"><i style="width:${Math.min(100, Math.round(coins()/r.cost*100))}%"></i></span></span><span class="coin">${r.cost}</span><button class="btn sm ${coins()>=r.cost?"primary":""}" data-act="redeem" ${coins()>=r.cost?"":"disabled"}>Canjear</button><button class="icon-btn" data-act="reward-del" aria-label="Borrar recompensa">${ICON.trash}</button></div>`).join("") || `<p class="empty">Añade cosas que te apetezcan de verdad.</p>`}</div>
     <div class="row"><input type="text" id="rw-text" placeholder="Ej.: ir al cine el viernes" style="flex:2;min-width:160px"><input type="number" id="rw-cost" min="5" step="5" placeholder="Precio" style="flex:1;min-width:80px"><button class="btn" data-act="reward-add">Añadir</button></div>
     ${S.redeemed.length ? `<p class="small muted">Últimas: ${S.redeemed.slice(-3).reverse().map(r => esc(r.text) + " (" + shortDate(dkey(new Date(r.ts))) + ")").join(" · ")}</p>`:""}
   </section>
@@ -1238,6 +1258,476 @@ function breathStep(i){
 }
 function breathStop(){ br.on = false; clearTimeout(br.t); clearInterval(br.tick); clearTimeout(br.end); br.phase = ""; }
 
+/* ================= SYNC (GitHub Gist, web only) ================= */
+const LS_SYNC = "segunda-mente-sync", GIST_FILE = "segunda-mente.json";
+let sync = {}; try { sync = JSON.parse(localStorage.getItem(LS_SYNC)) || {}; } catch(e){}
+let syncBusy = false, syncAgain = false, syncErr = "", syncT = null;
+const saveSyncCfg = () => { try { localStorage.setItem(LS_SYNC, JSON.stringify(sync)); } catch(e){} };
+async function gh(path, opts={}){
+  const r = await fetch("https://api.github.com" + path, Object.assign({cache:"no-store"}, opts, {headers:{Authorization:"Bearer " + sync.token, Accept:"application/vnd.github+json", "Content-Type":"application/json"}}));
+  if (!r.ok) throw {status:r.status};
+  return r.json();
+}
+const ARR_KEYS = ["subjects","tasks","notes","sessions","cards","timetable","rewards","control"];
+const OBJ_KEYS = ["checkins","journal","reviews","badges","goalDays"];
+function mergeStates(a, b){
+  const newer = (b.updated||0) > (a.updated||0) ? b : a, older = newer === a ? b : a;
+  const out = JSON.parse(JSON.stringify(newer));
+  const del = Object.assign({}, older.deleted||{}, newer.deleted||{});
+  const cutoff = Date.now() - 120*864e5; Object.keys(del).forEach(k => { if (del[k] < cutoff) delete del[k]; });
+  out.deleted = del;
+  ARR_KEYS.forEach(k => {
+    const seen = new Set(), res = [];
+    (newer[k]||[]).forEach(x => { if (x && !del[x.id]) { seen.add(x.id); res.push(x); } });
+    (older[k]||[]).forEach(x => { if (x && !seen.has(x.id) && !del[x.id]) { seen.add(x.id); res.push(JSON.parse(JSON.stringify(x))); } });
+    out[k] = k === "sessions" ? res.sort((p,q) => p.ts - q.ts) : res;
+  });
+  OBJ_KEYS.forEach(k => { out[k] = Object.assign({}, older[k]||{}, newer[k]||{}); });
+  const red = new Map(); [...(older.redeemed||[]), ...(newer.redeemed||[])].forEach(r => red.set(r.ts + r.text, r)); out.redeemed = [...red.values()].sort((p,q) => p.ts - q.ts);
+  out.xp = Math.max(a.xp||0, b.xp||0); out.spent = Math.max(a.spent||0, b.spent||0); out.dumps = Math.max(a.dumps||0, b.dumps||0);
+  out.onboarded = !!(a.onboarded || b.onboarded);
+  out.updated = Math.max(a.updated||0, b.updated||0);
+  return out;
+}
+function applyState(next){
+  S = migrate(next); known = idSet(S);
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){}
+  const act = document.activeElement;
+  if (!(act && /INPUT|TEXTAREA|SELECT/.test(act.tagName) && $("#view").contains(act))) render();
+}
+async function gistSync(){
+  if (!sync.token || !sync.gistId) return;
+  if (syncBusy){ syncAgain = true; return; }
+  syncBusy = true;
+  try {
+    const g = await gh("/gists/" + sync.gistId);
+    const f = g.files && g.files[GIST_FILE];
+    let remote = null;
+    if (f) remote = JSON.parse(f.truncated ? await (await fetch(f.raw_url, {cache:"no-store"})).text() : f.content);
+    const merged = remote ? mergeStates(S, remote) : S;
+    const mergedTxt = JSON.stringify(merged);
+    if (!remote || mergedTxt !== JSON.stringify(remote)) await gh("/gists/" + sync.gistId, {method:"PATCH", body:JSON.stringify({files:{[GIST_FILE]:{content:mergedTxt}}})});
+    if (mergedTxt !== JSON.stringify(S)) applyState(merged);
+    sync.last = Date.now(); syncErr = ""; saveSyncCfg();
+  } catch(e){
+    syncErr = e && e.status === 401 ? "El token ya no es válido. Crea otro y vuelve a conectar." : e && e.status === 404 ? "No encuentro el gist de sincronización. Vuelve a conectar." : "Sin conexión: se sincronizará cuando vuelva internet.";
+  }
+  syncBusy = false; paintSync();
+  if (syncAgain){ syncAgain = false; setTimeout(gistSync, 500); }
+}
+async function gistConnect(token){
+  sync = {token:token.trim()}; syncErr = "";
+  try {
+    const list = await gh("/gists?per_page=100");
+    const found = list.find(g => g.files && g.files[GIST_FILE] && /Segunda Mente/.test(g.description||""));
+    if (found) sync.gistId = found.id;
+    else {
+      const g = await gh("/gists", {method:"POST", body:JSON.stringify({description:"Segunda Mente FPE: datos sincronizados (privado)", public:false, files:{[GIST_FILE]:{content:JSON.stringify(S)}}})});
+      sync.gistId = g.id;
+    }
+    saveSyncCfg(); await gistSync(); syncInit();
+    toast(found ? "Conectado. He unido tus datos con los de tus otros dispositivos." : "Sincronización activada. Conecta tus otros dispositivos con el mismo token.");
+  } catch(e){
+    sync = {}; saveSyncCfg();
+    toast(e && e.status === 401 ? "Token no válido. Revisa que lo has copiado entero." : e && e.status === 403 ? "Al token le falta el permiso «gist»." : "No he podido conectar con GitHub. Prueba de nuevo.");
+  }
+  if ($("#modal-root").innerHTML) openSettings();
+  render();
+}
+function scheduleGist(){ if (sync.gistId){ clearTimeout(syncT); syncT = setTimeout(gistSync, 2500); } }
+let syncLoop = false;
+function syncInit(){
+  if (IN_CLAUDE || !sync.gistId || syncLoop) return;
+  syncLoop = true;
+  gistSync();
+  setInterval(() => { if (!document.hidden) gistSync(); }, 90000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) gistSync(); });
+  window.addEventListener("online", gistSync);
+}
+function syncSection(){
+  if (IN_CLAUDE) return "";
+  if (sync.gistId) return `<div class="eyebrow">Sincronización entre dispositivos</div>
+    <p class="small">Activa en este dispositivo. ${sync.last ? "Última sincronización: " + ago(sync.last) + "." : ""} ${syncErr ? `<br><span style="color:var(--danger)">${esc(syncErr)}</span>` : ""}</p>
+    <p class="small muted">En cada dispositivo nuevo: abre la web, Ajustes, pega el mismo token y pulsa Conectar. Tus datos se unen solos.</p>
+    <div class="row"><button class="btn sm" data-act="sync-now">Sincronizar ahora</button><button class="btn sm ghost" data-act="sync-off">Desconectar este dispositivo</button></div>
+    <hr class="hr">`;
+  return `<div class="eyebrow">Sincronización entre dispositivos</div>
+    <p class="small">Guarda tu progreso en un gist privado de tu cuenta de GitHub y lo comparte entre el móvil, el portátil y cualquier navegador.</p>
+    <ol class="small" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px">
+      <li>Abre <a href="https://github.com/settings/tokens/new?scopes=gist&description=Segunda%20Mente%20FPE" target="_blank" rel="noopener">este enlace</a> (token clásico con el permiso <b>gist</b> ya marcado).</li>
+      <li>En «Expiration» elige «No expiration» o una fecha lejana y pulsa «Generate token».</li>
+      <li>Copia el token (empieza por <code>ghp_</code>) y pégalo aquí. Guárdalo también en un sitio seguro para tus otros dispositivos.</li></ol>
+    <div class="row"><input type="password" id="sync-token" placeholder="ghp_…" autocomplete="off" style="flex:1;min-width:180px"><button class="btn sm primary" data-act="sync-connect">Conectar</button></div>
+    <p class="small muted">El token solo da acceso a tus gists y se guarda únicamente en este navegador.</p>
+    <hr class="hr">`;
+}
+
+/* ================= COACH (sin IA) ================= */
+const LS_C = "segunda-mente-coach";
+let coachMsgs = []; try { coachMsgs = JSON.parse(localStorage.getItem(LS_C)) || []; } catch(e){}
+const saveCoach = () => { coachMsgs = coachMsgs.slice(-40); try { localStorage.setItem(LS_C, JSON.stringify(coachMsgs)); } catch(e){} };
+const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[¿?¡!.,;:()"'«»]/g," ").replace(/\s+/g," ").trim();
+const fmtMin = m => { m = Math.max(0, Math.round(m)); return m < 60 ? m + " min" : Math.floor(m/60) + " h" + (m%60 ? " " + m%60 + " min" : ""); };
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const firstName = () => S.name ? S.name.split(" ")[0] : "";
+function nextExam(){ return S.tasks.filter(t => t.type === "examen" && !t.done && t.due && t.due >= dkey()).sort(byDue)[0]; }
+function nextTask(){
+  const today = dkey(), open = S.tasks.filter(t => !t.done && t.type !== "examen");
+  return open.filter(t => t.plan === today).sort(byDue)[0] || open.filter(t => t.plan && t.plan < today).sort(byDue)[0] || open.filter(t => !t.plan || t.plan <= today).sort(byDue)[0] || null;
+}
+function weakestSubject(){ const wk = weekMinBySubject(); return S.subjects.map(s => ({s, p:(wk[s.id]||0)/(((s.weekly??4)*60)||1)})).sort((a,b) => a.p - b.p)[0]?.s; }
+function rewardNeed(r){ return Math.max(0, 5*(r.cost + S.spent) - S.xp); }
+function whenTxt(k){ const n = daysBetween(new Date(), parseD(k)); return n === 0 ? "hoy" : n === 1 ? "mañana" : n === 2 ? "pasado mañana" : n < 7 ? "el " + DOW[parseD(k).getDay()] + " " + parseD(k).getDate() : "el " + shortDate(k); }
+function coachBrief(){
+  const ex = nextExam(), m = minutesOn(dkey()), g = S.settings.dailyGoal;
+  if (ex){ const n = dueInfo(ex.due).n; if (n <= 10) return `Tu examen «${esc(ex.title)}» es ${whenTxt(ex.due)}. ${S.tasks.some(t => t.examId === ex.id) ? "Sigue el plan de repaso: cada sesión cuenta." : "Crea un plan de repaso y quítate la incertidumbre de encima."}`; }
+  if (m === 0) return pick(["Hoy aún no has empezado. Un bloque y la inercia hace el resto.","Lo más difícil del día es el primer bloque. Hazlo pequeño si hace falta."]);
+  if (m < g) return `Llevas ${fmtMin(m)}. Te faltan ${fmtMin(g-m)} para tu meta: ${Math.ceil((g-m)/S.settings.focus)} bloque${Math.ceil((g-m)/S.settings.focus)>1?"s":""}.`;
+  return pick(["Meta cumplida. Descansar bien también es parte del plan.","Has cumplido. Lo que hagas ahora es extra; descansar también suma."]);
+}
+// ---- knowledge base: [aliases | separated, title, area, explanation]
+const KB = [
+ ["optimo de pareto|eficiencia de pareto|pareto","Óptimo de Pareto","Economía","Una situación es eficiente en el sentido de Pareto cuando no se puede mejorar a nadie sin empeorar a otro. Ojo: eficiente no significa justo; una asignación donde una persona lo tiene todo también puede ser Pareto-óptima."],
+ ["equilibrio de nash|nash","Equilibrio de Nash","Economía / Teoría de juegos","Combinación de estrategias en la que ningún jugador gana cambiando la suya si los demás mantienen las suyas. No tiene por qué ser eficiente: el dilema del prisionero es el ejemplo clásico."],
+ ["dilema del prisionero|prisionero","Dilema del prisionero","Teoría de juegos","Dos jugadores tienen incentivos individuales para no cooperar (delatar), aunque si ambos cooperasen estarían mejor. Muestra el choque entre racionalidad individual y colectiva; explica carreras armamentísticas o la dificultad de los acuerdos climáticos."],
+ ["elasticidad|elasticidad precio","Elasticidad precio de la demanda","Economía","Variación porcentual de la cantidad demandada ante una variación del 1% en el precio. Si |e| > 1 la demanda es elástica (sensible al precio); si |e| < 1, inelástica (bienes básicos, tabaco)."],
+ ["coste de oportunidad","Coste de oportunidad","Economía","El valor de la mejor alternativa a la que renuncias al elegir algo. Estudiar 2 horas cuesta lo que habrías hecho con esas 2 horas."],
+ ["externalidad|externalidades","Externalidad","Economía","Efecto de una actividad sobre terceros que no se refleja en el precio. Negativa: contaminación. Positiva: vacunación o educación. Es un fallo de mercado; se corrige con impuestos pigouvianos, subsidios o regulación."],
+ ["bien publico|bienes publicos|free rider|polizon","Bien público","Economía","Bien no rival (mi consumo no reduce el tuyo) y no excluible (no se puede impedir que alguien lo use), como la defensa nacional o un faro. Genera el problema del polizón (free rider): todos quieren usarlo sin pagarlo."],
+ ["oferta y demanda|ley de la oferta|ley de la demanda|equilibrio de mercado","Oferta y demanda","Economía","La demanda baja cuando sube el precio; la oferta sube. El equilibrio está donde se cruzan: ahí la cantidad que se quiere comprar coincide con la que se quiere vender."],
+ ["utilidad marginal","Utilidad marginal","Economía","Satisfacción extra que aporta una unidad adicional de un bien. Suele ser decreciente: el tercer café te aporta menos que el primero."],
+ ["monopolio","Monopolio","Economía","Mercado con un solo vendedor. Fija un precio mayor y produce menos que en competencia, lo que genera una pérdida de eficiencia (pérdida irrecuperable de eficiencia)."],
+ ["competencia perfecta","Competencia perfecta","Economía","Muchos compradores y vendedores, producto homogéneo, información perfecta y libre entrada. Las empresas son precio-aceptantes y el precio iguala al coste marginal."],
+ ["pib|producto interior bruto","PIB","Economía","Valor de mercado de todos los bienes y servicios finales producidos en un país en un periodo. Por el lado del gasto: PIB = C + I + G + (X − M)."],
+ ["inflacion","Inflación","Economía","Aumento sostenido del nivel general de precios. Reduce el poder adquisitivo. En la zona euro el BCE busca una inflación del 2% a medio plazo."],
+ ["politica monetaria|banco central|bce|tipos de interes","Política monetaria","Economía","La gestiona el banco central (en la zona euro, el BCE) controlando tipos de interés y liquidez. Subir tipos enfría la economía y frena la inflación; bajarlos la estimula."],
+ ["politica fiscal|deficit|deuda publica","Política fiscal","Economía","Uso del gasto público y los impuestos para influir en la economía. Expansiva: más gasto o menos impuestos. Contractiva: lo contrario."],
+ ["fallo de mercado|fallos de mercado","Fallos de mercado","Economía","Situaciones en las que el mercado no asigna eficientemente: externalidades, bienes públicos, información asimétrica y poder de mercado. Justifican la intervención pública."],
+ ["mano invisible|adam smith","Mano invisible (Adam Smith)","Economía / Filosofía","Idea de Smith (La riqueza de las naciones, 1776): al buscar su propio interés en el mercado, los individuos pueden promover el bien común sin pretenderlo."],
+ ["curva de indiferencia|curvas de indiferencia","Curva de indiferencia","Economía","Conjunto de combinaciones de dos bienes que dan al consumidor la misma utilidad. Su pendiente es la relación marginal de sustitución."],
+ ["keynes|keynesianismo","Keynesianismo","Economía","Keynes defendió que, en recesión, la demanda agregada puede quedarse corta y el Estado debe estimularla con gasto público. Base de las políticas anticíclicas."],
+ ["paradoja de arrow|teorema de arrow|teorema de imposibilidad","Teorema de imposibilidad de Arrow","Ciencia Política / Elección social","Arrow demostró que, con tres o más opciones, ningún sistema de votación que ordene preferencias cumple a la vez unas condiciones razonables (dominio universal, Pareto, independencia de alternativas irrelevantes y no dictadura). No existe el sistema de voto perfecto."],
+ ["paradoja de condorcet|condorcet","Paradoja de Condorcet","Ciencia Política","Las preferencias colectivas pueden ser cíclicas aunque las individuales sean coherentes: la mayoría prefiere A a B, B a C y C a A."],
+ ["votante mediano","Teorema del votante mediano","Ciencia Política","Si las preferencias son unimodales en un eje, la opción preferida por el votante mediano gana a cualquier otra. Explica por qué los partidos tienden a moderarse hacia el centro."],
+ ["separacion de poderes|montesquieu","Separación de poderes","Ciencia Política / Derecho","Montesquieu (El espíritu de las leyes, 1748): dividir el poder en legislativo, ejecutivo y judicial para que el poder frene al poder y se proteja la libertad."],
+ ["estado|weber|monopolio de la violencia","El Estado según Weber","Ciencia Política","Max Weber definió el Estado como la comunidad humana que reclama con éxito el monopolio de la violencia física legítima en un territorio."],
+ ["legitimidad|tipos de dominacion|dominacion legitima","Tipos de legitimidad (Weber)","Ciencia Política","Weber distingue tres tipos de dominación legítima: tradicional (costumbre), carismática (cualidades del líder) y legal-racional (normas y procedimientos)."],
+ ["democracia","Democracia","Ciencia Política","Gobierno del pueblo. Robert Dahl habla de poliarquía: elecciones libres y periódicas, sufragio universal, libertad de expresión, fuentes de información alternativas y libertad de asociación."],
+ ["soberania","Soberanía","Ciencia Política","Poder supremo e independiente dentro de un territorio. Bodin y Hobbes la teorizaron; con Rousseau pasa a ser soberanía popular. En la Constitución española reside en el pueblo español (art. 1.2)."],
+ ["federalismo|estado federal","Federalismo","Ciencia Política","Reparto del poder entre un gobierno central y unidades territoriales, ambos con competencias garantizadas constitucionalmente. Ejemplos: EE. UU., Alemania. España es un Estado autonómico con rasgos federales."],
+ ["dhondt|d hondt|ley dhondt|sistema electoral","Sistema electoral y fórmula D'Hondt","Ciencia Política","D'Hondt reparte escaños dividiendo los votos de cada partido entre 1, 2, 3… y asignando los escaños a los cocientes más altos. Favorece algo a los partidos grandes, sobre todo en circunscripciones pequeñas como las provincias españolas."],
+ ["realismo|realismo politico|realismo relaciones internacionales","Realismo (Relaciones Internacionales)","Ciencia Política / RR. II.","El sistema internacional es anárquico (no hay autoridad superior), los Estados buscan sobrevivir y maximizar poder o seguridad. Autores: Morgenthau, Waltz (neorrealismo), Mearsheimer."],
+ ["liberalismo internacional|institucionalismo|idealismo","Liberalismo en RR. II.","Ciencia Política / RR. II.","La cooperación es posible gracias a instituciones, comercio e interdependencia y democracia (paz democrática). Autores: Keohane, Nye; antecedente en Kant (La paz perpetua)."],
+ ["geopolitica","Geopolítica","RR. II.","Estudio de cómo la geografía (territorio, recursos, rutas, fronteras) condiciona el poder y la política exterior de los Estados. Clásicos: Mackinder (Heartland), Spykman (Rimland), Mahan (poder naval)."],
+ ["otan|nato","OTAN","RR. II.","Alianza militar fundada en 1949 (Tratado de Washington). Su núcleo es el artículo 5: un ataque contra un miembro es un ataque contra todos. España ingresó en 1982."],
+ ["onu|naciones unidas|consejo de seguridad","ONU","RR. II.","Fundada en 1945 (Carta de San Francisco). El Consejo de Seguridad tiene 15 miembros, 5 permanentes con derecho de veto: EE. UU., Rusia, China, Francia y Reino Unido."],
+ ["union europea|ue|comision europea|parlamento europeo","Unión Europea","RR. II. / Derecho","Organización supranacional de 27 Estados. Instituciones clave: Comisión (propone y ejecuta), Parlamento y Consejo (legislan), Consejo Europeo (orientación política) y TJUE. Raíces en la CECA (1951) y los Tratados de Roma (1957); el de Lisboa (2007) es el marco actual."],
+ ["contrato social|contractualismo","Contrato social","Filosofía política","Idea de que la autoridad política se justifica por un acuerdo (hipotético) entre individuos. Hobbes: para escapar de la guerra de todos contra todos. Locke: para proteger derechos naturales. Rousseau: voluntad general. Rawls lo renueva con el velo de ignorancia."],
+ ["hobbes|leviatan","Hobbes","Filosofía política","Leviatán (1651): en el estado de naturaleza la vida es «solitaria, pobre, desagradable, brutal y corta». Los individuos ceden su poder a un soberano absoluto a cambio de seguridad."],
+ ["locke","Locke","Filosofía política","Segundo tratado sobre el gobierno civil (1689): derechos naturales a la vida, la libertad y la propiedad. El gobierno existe para protegerlos y, si los viola, el pueblo puede resistirse. Padre del liberalismo."],
+ ["rousseau|voluntad general","Rousseau","Filosofía política","El contrato social (1762): la soberanía reside en el pueblo y se expresa en la voluntad general, que busca el bien común y no es la suma de intereses privados."],
+ ["rawls|velo de ignorancia|teoria de la justicia|principio de diferencia","Rawls y el velo de ignorancia","Filosofía política","Teoría de la justicia (1971): elegiríamos principios justos sin saber qué lugar ocuparemos en la sociedad. Resultado: iguales libertades básicas y el principio de diferencia (las desigualdades solo se justifican si benefician a los peor situados)."],
+ ["nozick","Nozick","Filosofía política","Anarquía, Estado y utopía (1974): defensa libertaria del Estado mínimo. Una distribución es justa si surge de adquisiciones y transferencias justas, sin importar el resultado final."],
+ ["utilitarismo|bentham|mill|stuart mill","Utilitarismo","Ética","Lo correcto es lo que produce la mayor felicidad para el mayor número (Bentham). Mill distingue placeres superiores e inferiores. Crítica típica: puede justificar sacrificar a individuos por el agregado."],
+ ["kant|imperativo categorico","Kant y el imperativo categórico","Ética","Actúa solo según una máxima que puedas querer como ley universal, y trata a la humanidad siempre como un fin y nunca solo como un medio. Ética deontológica: importa el deber, no las consecuencias."],
+ ["aristoteles|etica a nicomaco|virtud|termino medio|eudaimonia","Aristóteles y la virtud","Ética / Historia de la Filosofía","La felicidad (eudaimonía) es el fin último y se alcanza viviendo según la virtud. La virtud es un término medio entre dos vicios (el valor, entre la cobardía y la temeridad) y se adquiere por hábito."],
+ ["platon|mito de la caverna|caverna|teoria de las ideas|mundo de las ideas","Platón","Historia de la Filosofía","Distingue el mundo sensible (cambiante, opinión) del mundo de las Ideas (eterno, conocimiento verdadero). En el mito de la caverna, los prisioneros confunden sombras con la realidad; el filósofo sale y ve el Bien. En La República propone que gobiernen los filósofos."],
+ ["socrates|mayeutica","Sócrates","Historia de la Filosofía","No escribió nada; lo conocemos por Platón. Método: la ironía y la mayéutica (preguntar hasta que el otro descubra la verdad). «Solo sé que no sé nada». Intelectualismo moral: quien conoce el bien, lo hace."],
+ ["descartes|cogito|pienso luego existo|duda metodica","Descartes","Historia de la Filosofía","Racionalista. Usa la duda metódica para encontrar una verdad indudable: «pienso, luego existo» (cogito). Distingue dos sustancias: pensamiento (res cogitans) y extensión (res extensa)."],
+ ["hume|problema de la induccion|induccion|empirismo","Hume y el empirismo","Historia de la Filosofía","Todo conocimiento procede de la experiencia (impresiones e ideas). Problema de la inducción: que el sol haya salido siempre no garantiza lógicamente que salga mañana; la causalidad es un hábito mental."],
+ ["racionalismo","Racionalismo","Historia de la Filosofía","La razón es la fuente principal del conocimiento, con ideas innatas. Descartes, Spinoza, Leibniz. Se opone al empirismo (Locke, Berkeley, Hume); Kant intenta sintetizar ambos."],
+ ["marx|marxismo|materialismo historico|plusvalia|lucha de clases","Marx","Filosofía / Economía política","La historia avanza por la lucha de clases y las condiciones materiales (materialismo histórico). En el capitalismo, el beneficio procede de la plusvalía: el valor que el trabajador produce por encima de su salario."],
+ ["nietzsche|superhombre|muerte de dios|voluntad de poder","Nietzsche","Historia de la Filosofía","Critica la moral cristiana como moral de esclavos. «Dios ha muerto»: se derrumban los valores absolutos. Propone transvalorar los valores, la voluntad de poder y el superhombre."],
+ ["maquiavelo|el principe","Maquiavelo","Filosofía política","El príncipe (1513): separa la política de la moral tradicional. El gobernante debe conservar el poder y el Estado, y para ello a veces debe actuar contra la moral; mejor ser temido que amado si no se pueden ambas."],
+ ["tocqueville","Tocqueville","Ciencia Política","La democracia en América: analiza la igualdad de condiciones, el asociacionismo y el riesgo de la tiranía de la mayoría."],
+ ["falacia|falacias|ad hominem","Falacias","Lógica","Razonamientos que parecen válidos pero no lo son. Ad hominem: atacar a la persona. Hombre de paja: deformar el argumento rival. Falsa dicotomía: presentar solo dos opciones. Pendiente resbaladiza: encadenar consecuencias sin justificarlas."],
+ ["silogismo|logica|validez|modus ponens","Lógica: validez","Lógica","Un argumento es válido si es imposible que las premisas sean verdaderas y la conclusión falsa. Modus ponens: si p entonces q; p; luego q. Modus tollens: si p entonces q; no q; luego no p."],
+ ["constitucion espanola|constitucion de 1978|ce 1978","Constitución española de 1978","Derecho Constitucional","Aprobada en referéndum el 6 de diciembre de 1978. Define España como Estado social y democrático de Derecho (art. 1.1), monarquía parlamentaria (art. 1.3). Tiene 169 artículos. Título I: derechos y deberes; los arts. 14 a 29 son los derechos fundamentales con máxima protección."],
+ ["tribunal constitucional|tc","Tribunal Constitucional","Derecho Constitucional","Intérprete supremo de la Constitución (arts. 159-165 CE). 12 magistrados por 9 años, renovados por tercios. Resuelve recursos y cuestiones de inconstitucionalidad, recursos de amparo y conflictos de competencia."],
+ ["recurso de amparo|amparo","Recurso de amparo","Derecho Constitucional","Protege los derechos de los arts. 14 a 30.2 CE (incluida la objeción de conciencia) frente a vulneraciones de los poderes públicos. Se presenta ante el TC tras agotar la vía judicial."],
+ ["derechos fundamentales","Derechos fundamentales","Derecho Constitucional","Sección 1ª del Capítulo II del Título I (arts. 15-29) más la igualdad (art. 14). Se desarrollan por ley orgánica, vinculan a todos los poderes y tienen protección reforzada: procedimiento preferente y sumario y recurso de amparo."],
+ ["cortes generales|congreso|senado|poder legislativo","Cortes Generales","Derecho Constitucional","Formadas por el Congreso (350 diputados, circunscripción provincial, fórmula D'Hondt) y el Senado. Ejercen la potestad legislativa, aprueban los presupuestos y controlan al Gobierno."],
+ ["ley organica|leyes organicas","Ley orgánica","Derecho Constitucional","Art. 81 CE: regula derechos fundamentales, estatutos de autonomía, régimen electoral y otras materias previstas. Requiere mayoría absoluta del Congreso en una votación final sobre el conjunto."],
+ ["reforma constitucional|articulo 167|articulo 168","Reforma constitucional","Derecho Constitucional","Art. 167: procedimiento ordinario, 3/5 de cada cámara y referéndum si lo pide un 10% de una cámara. Art. 168: agravado para reforma total, Título Preliminar, derechos fundamentales o la Corona: 2/3, disolución de las Cortes, ratificación por las nuevas cámaras y referéndum obligatorio."],
+ ["jerarquia normativa|fuentes del derecho","Jerarquía normativa","Derecho Constitucional","Constitución > leyes (orgánicas y ordinarias, con decretos-leyes y decretos legislativos con rango de ley) > reglamentos. Una norma inferior no puede contradecir a una superior (art. 9.3 CE)."],
+ ["estado autonomico|comunidades autonomas|autonomias|estatuto de autonomia","Estado autonómico","Derecho Constitucional","Título VIII CE. 17 comunidades autónomas y 2 ciudades autónomas. Las competencias se reparten entre el art. 148 (autonómicas) y el 149 (exclusivas del Estado); los estatutos de autonomía son su norma institucional básica."],
+ ["mocion de censura|cuestion de confianza","Moción de censura y cuestión de confianza","Derecho Constitucional","Moción de censura (art. 113 CE): constructiva, debe incluir un candidato alternativo y requiere mayoría absoluta. Cuestión de confianza (art. 112): la plantea el presidente y basta mayoría simple."],
+ ["derivada|derivadas","Derivada","Matemáticas","Mide la tasa de cambio instantánea de una función: la pendiente de la recta tangente. En economía, el coste marginal es la derivada del coste total. Reglas clave: (xⁿ)' = n·xⁿ⁻¹; producto (fg)' = f'g + fg'; cadena (f(g(x)))' = f'(g(x))·g'(x)."],
+ ["regla de la cadena","Regla de la cadena","Matemáticas","Para derivar una función compuesta f(g(x)): deriva la de fuera evaluada en la de dentro y multiplica por la derivada de la de dentro. Ejemplo: (x²+1)³ → 3(x²+1)²·2x."],
+ ["integral|integrales","Integral","Matemáticas","Operación inversa de la derivada; la integral definida mide el área bajo la curva. Regla de Barrow: ∫ₐᵇ f(x)dx = F(b) − F(a), con F primitiva de f. En economía: del coste marginal al coste total."],
+ ["limite|limites","Límite","Matemáticas","Valor al que se acerca f(x) cuando x se acerca a un punto. Indeterminaciones típicas: 0/0 (factoriza o usa L'Hôpital), ∞/∞ (divide por la mayor potencia)."],
+ ["matriz|matrices|determinante","Matrices y determinantes","Matemáticas","Una matriz es una tabla de números; el determinante (solo en matrices cuadradas) indica si es invertible (det ≠ 0). 2x2: det = ad − bc. Se usan para resolver sistemas lineales (Cramer, Gauss)."],
+ ["sistema de ecuaciones|gauss|cramer","Sistemas de ecuaciones lineales","Matemáticas","Teorema de Rouché-Frobenius: el sistema es compatible si rango(A) = rango(A|b); determinado si además ese rango es igual al número de incógnitas. Gauss: triangula la matriz ampliada."],
+ ["lagrange|multiplicadores de lagrange|optimizacion con restricciones","Multiplicadores de Lagrange","Matemáticas","Para maximizar f(x,y) sujeto a g(x,y) = c, plantea L = f − λ(g − c) e iguala a cero sus derivadas parciales respecto a x, y y λ. En economía: maximizar utilidad sujeta a la restricción presupuestaria."],
+ ["maximos y minimos|optimizacion|extremos","Máximos y mínimos","Matemáticas","Puntos críticos: f'(x) = 0. Si f''(x) < 0 es un máximo; si f''(x) > 0, un mínimo. En dos variables, usa la matriz hessiana."],
+ ["revolucion francesa","Revolución francesa (1789-1799)","Historia Contemporánea","Fin del Antiguo Régimen en Francia: toma de la Bastilla (14 de julio de 1789), Declaración de los Derechos del Hombre y del Ciudadano, república, Terror jacobino (Robespierre) y llegada de Napoleón (1799). Difunde soberanía nacional, igualdad ante la ley y separación de poderes."],
+ ["revolucion industrial","Revolución industrial","Historia Contemporánea","Desde Gran Bretaña a finales del XVIII: máquina de vapor, textil, ferrocarril, fábricas y urbanización. Nace la clase obrera y con ella el movimiento obrero, el socialismo y el anarquismo."],
+ ["congreso de viena|restauracion","Congreso de Viena (1814-1815)","Historia Contemporánea","Tras Napoleón, las potencias reorganizan Europa con el principio de legitimidad y el equilibrio de poder. Inicia la Restauración y la Santa Alianza."],
+ ["revoluciones liberales|1830|1848","Revoluciones liberales (1820, 1830, 1848)","Historia Contemporánea","Oleadas contra el absolutismo restaurado. 1848, la «primavera de los pueblos», añade demandas democráticas, nacionalistas y sociales."],
+ ["primera guerra mundial|gran guerra|1914","Primera Guerra Mundial (1914-1918)","Historia Contemporánea","Causas: imperialismo, nacionalismos, carrera armamentística y sistema de alianzas; detonante: asesinato de Francisco Fernando en Sarajevo. Guerra de trincheras. Tratado de Versalles (1919): duras condiciones a Alemania y creación de la Sociedad de Naciones."],
+ ["revolucion rusa|1917|bolcheviques|lenin","Revolución rusa (1917)","Historia Contemporánea","Febrero: cae el zar. Octubre: los bolcheviques de Lenin toman el poder. Tras la guerra civil nace la URSS (1922); con Stalin, colectivización, industrialización forzada y purgas."],
+ ["crac del 29|crisis de 1929|gran depresion","Crac del 29 y Gran Depresión","Historia Contemporánea","Hundimiento de la bolsa de Nueva York en octubre de 1929, seguido de quiebras, paro masivo y caída del comercio mundial. Respuestas: New Deal de Roosevelt e ideas de Keynes; en Europa favoreció a los fascismos."],
+ ["fascismo|nazismo|totalitarismo","Fascismo y totalitarismos","Historia Contemporánea","Mussolini (1922) y Hitler (1933): partido único, culto al líder, nacionalismo extremo, violencia y control total de la sociedad. Hannah Arendt analizó el totalitarismo en Los orígenes del totalitarismo (1951)."],
+ ["segunda guerra mundial|1939","Segunda Guerra Mundial (1939-1945)","Historia Contemporánea","Empieza con la invasión alemana de Polonia (1939). Holocausto, Pearl Harbor (1941), Stalingrado (1942-43), desembarco de Normandía (1944), bombas atómicas sobre Hiroshima y Nagasaki (1945). Da lugar a la ONU y al mundo bipolar."],
+ ["guerra fria","Guerra Fría (1947-1991)","Historia Contemporánea","Rivalidad EE. UU.-URSS sin guerra directa: doctrina Truman, plan Marshall, OTAN y Pacto de Varsovia, crisis de los misiles de Cuba (1962), Vietnam, carrera espacial. Termina con la caída del Muro (1989) y la disolución de la URSS (1991)."],
+ ["descolonizacion","Descolonización","Historia Contemporánea","Tras 1945, independencia de colonias en Asia y África: India (1947), Indonesia, Argelia (1962) y gran parte de África hacia 1960. Conferencia de Bandung (1955) y Movimiento de Países No Alineados."],
+ ["muro de berlin|caida del muro","Caída del Muro de Berlín (1989)","Historia Contemporánea","El 9 de noviembre de 1989 cae el Muro, símbolo de la división de Europa. Reunificación alemana en 1990 y fin de los regímenes comunistas del Este."],
+ ["guerra civil espanola|guerra civil","Guerra Civil española (1936-1939)","Historia Contemporánea","Golpe militar del 18 de julio de 1936 contra la Segunda República. Bando sublevado (Franco) con apoyo de Alemania e Italia; republicano con apoyo soviético y de las Brigadas Internacionales. Termina el 1 de abril de 1939 con la dictadura franquista."],
+ ["segunda republica","Segunda República (1931-1939)","Historia Contemporánea","Proclamada el 14 de abril de 1931. Constitución de 1931: sufragio femenino, Estado laico, reformas agraria y militar. Bienio reformista, bienio conservador y Frente Popular (1936)."],
+ ["franquismo|franco","Franquismo (1939-1975)","Historia Contemporánea","Dictadura de Franco: represión, autarquía en los 40, Plan de Estabilización (1959) y desarrollismo en los 60. Termina con su muerte en 1975."],
+ ["transicion|transicion espanola","Transición española (1975-1982)","Historia Contemporánea","Paso de la dictadura a la democracia: Ley para la Reforma Política (1976), elecciones de 1977, Pactos de la Moncloa, Constitución de 1978, intento de golpe del 23-F (1981) y victoria del PSOE en 1982."],
+ ["construccion europea|tratado de roma|tratado de maastricht|maastricht","Construcción europea","Historia Contemporánea","CECA (1951), Tratados de Roma y CEE (1957), Acta Única (1986), Maastricht (1992, nace la Unión Europea), euro (1999-2002), Lisboa (2007). España entra en 1986."]
+];
+const KB_N = KB.map(([al, t, area, d]) => ({al:al.split("|").map(norm), t, area, d}));
+function findConcept(q){
+  const n = " " + norm(q) + " ";
+  let best = null, bs = 0;
+  KB_N.forEach(c => c.al.forEach(a => { if (n.includes(" " + a + " ") || (a.length > 5 && n.includes(a))) { const sc = a.length; if (sc > bs){ bs = sc; best = c; } } }));
+  return best;
+}
+const INTENTS = [
+  ["who", ["quien eres","que eres","que puedes hacer","que sabes hacer","ayuda","como funcionas","para que sirves","comandos"]],
+  ["greet", ["hola","buenas","hey","buenos dias","buenas tardes","buenas noches","que tal","holi"]],
+  ["thanks", ["gracias","muchas gracias","genial","perfecto","te quiero","eres el mejor","eres la mejor"]],
+  ["status", ["como voy","estadistic","cuanto he estudiado","cuantas horas llevo","cuanto llevo","mi progreso","resumen de","racha","mi nivel","que nivel","mis datos","balance"]],
+  ["whatnow", ["que hago","que estudio","por donde empiezo","que deberia","siguiente tarea","y ahora","no se que hacer","no se por donde","por que empiezo","que toca"]],
+  ["plantoday", ["plan de hoy","plan para hoy","planifica","organiza el dia","organizame el dia","horario de hoy","hazme un plan","como organizo hoy","plan del dia"]],
+  ["week", ["semana","organizame la semana","planificar la semana","esta semana","proxima semana"]],
+  ["exam", ["examen","examenes","parcial","final","evaluacion","prueba"]],
+  ["examanx", ["nervios","nervioso","nerviosa","ansiedad","miedo","quedar en blanco","bloqueo","panico","me bloqueo"]],
+  ["agobio", ["agobi","estres","estresad","abruma","no puedo mas","demasiad","saturad","colaps","desbord","no llego","todo a la vez"]],
+  ["sad", ["triste","deprim","llorar","me siento mal","estoy mal","solo","sola","no valgo","hundid","vacio"]],
+  ["fail", ["suspend","suspens","fracas","he fallado","no he hecho nada","culpa","perdido el dia","perdi el dia","inutil","decepcion","soy un desastre","mal dia"]],
+  ["nomot", ["no tengo ganas","sin ganas","motivacion","motivame","motivar","desmotivad","pereza","vago","vaga","no me apetece","animo","animame","aburr","no quiero estudiar"]],
+  ["procras", ["procrastin","dejarlo para","dejo todo para","aplazo","ultimo momento","manana empiezo","postergo"]],
+  ["focus", ["concentr","distrae","distraigo","distraccion","atencion","despisto","no me centro","mente en blanco","foco"]],
+  ["phone", ["movil","telefono","redes","instagram","tiktok","whatsapp","youtube","notificaciones","pantalla"]],
+  ["tired", ["cansad","sueno","dormir","agotad","sin energia","dormid","insomnio","duermo"]],
+  ["howstudy", ["como estudio","como estudiar","tecnica","metodo","estudiar mejor","aprender mejor","memoriz","recordar","olvido","se me olvida","estudiar bien"]],
+  ["notes", ["apuntes","resumen","resumir","subrayar","esquema","tomar notas"]],
+  ["math", ["matemat","mates","ejercicio","problemas de","derivad","integral","calculo","algebra"]],
+  ["philo", ["filosofia","comentario de texto","comentar un texto","autores"]],
+  ["politics", ["ciencia politica","politolog"]],
+  ["law", ["derecho constitucional","constitucional","constitucion","articulos","jurisprudencia"]],
+  ["history", ["historia","fechas","cronolog"]],
+  ["essay", ["ensayo","redactar","escribir un trabajo","trabajo escrito","citar","bibliografia","argumentar"]],
+  ["oral", ["exposicion","presentacion","hablar en publico","presentar"]],
+  ["group", ["trabajo en grupo","companeros","en grupo"]],
+  ["reading", ["lectura","leer","libro","paper","lecturas","texto largo"]],
+  ["time", ["cuanto estudiar","cuantas horas deberia","horas al dia","cuanto tiempo deberia","cuanto debo estudiar"]],
+  ["breaks", ["descanso","pausa","descansar"]],
+  ["health", ["comer","comida","deporte","ejercicio fisico","cafe","cafeina","beber agua"]],
+  ["rewards", ["recompensa","monedas","canjear","premio","cuanto me falta para"]],
+  ["why", ["por que estudio","mi porque","para que estudio","sentido de estudiar","para que sirve"]],
+  ["career", ["trabajo futuro","salidas","trabajar en","diplomac","instituciones","carrera profesional","oposicion","practicas","erasmus","master"]],
+  ["upf", ["aula global","upf","tutoria","profesor","profesora","biblioteca","campus"]],
+  ["quote", ["frase","cita","inspira"]]
+];
+function detectIntent(n){
+  let best = null, bs = 0;
+  const boost = {phone:6, examanx:4, agobio:3, fail:2};
+  INTENTS.forEach(([id, kws]) => { let sc = 0; kws.forEach(k => { if (n.includes(k)) sc += k.length; }); if (sc) sc += boost[id]||0; if (sc > bs){ bs = sc; best = id; } });
+  return best;
+}
+function parseDate(n){
+  const today = dkey();
+  if (/pasado manana/.test(n)) return addDays(today, 2);
+  if (/\bmanana\b/.test(n)) return addDays(today, 1);
+  if (/\bhoy\b/.test(n)) return today;
+  if (/semana que viene|proxima semana/.test(n)) return addDays(today, 7);
+  let m = n.match(/en (\d{1,2}) dias?/); if (m) return addDays(today, +m[1]);
+  const days = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+  for (let i = 0; i < 7; i++){ if (new RegExp("\\b" + days[i] + "\\b").test(n)){ let diff = (i - new Date().getDay() + 7) % 7; if (diff === 0) diff = 7; return addDays(today, diff); } }
+  m = n.match(/\b(\d{1,2})[\/\-](\d{1,2})\b/);
+  if (m){ const y = new Date().getFullYear(); let k = y + "-" + pad(+m[2]) + "-" + pad(+m[1]); if (k < today) k = (y+1) + "-" + pad(+m[2]) + "-" + pad(+m[1]); return k; }
+  m = n.match(/\bel (?:dia )?(\d{1,2})\b(?! ?min)/);
+  if (m){ const d = new Date(); let x = new Date(d.getFullYear(), d.getMonth(), +m[1]); if (dkey(x) < today) x = new Date(d.getFullYear(), d.getMonth()+1, +m[1]); return dkey(x); }
+  return "";
+}
+function findSubject(n){
+  let best = null, bs = 0;
+  S.subjects.forEach(s => {
+    const sn = norm(s.name);
+    if (n.includes(sn)){ if (sn.length > bs){ bs = sn.length; best = s; } return; }
+    sn.split(" ").filter(w => w.length > 4).forEach(w => { if (n.includes(w) && w.length > bs){ bs = w.length; best = s; } });
+    if (/matem/.test(sn) && /\bmates\b/.test(n) && bs < 5){ bs = 5; best = s; }
+  });
+  return best;
+}
+function cleanTitle(raw){
+  let t = raw.replace(/^\s*(a[nñ]ade|agrega|crea|apunta|anota|recu[eé]rdame|ap[uú]ntame|pon|guarda)( que)?\s+/i, "");
+  t = t.replace(/\b(para |el |este |pr[oó]ximo |la )*(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)( que viene)?\b/gi, "")
+       .replace(/\b(para )?(pasado )?ma[nñ]ana\b/gi, "").replace(/\b(para )?hoy\b/gi, "")
+       .replace(/\b(para )?(el )?(d[ií]a )?\d{1,2}[\/\-]\d{1,2}\b/gi, "").replace(/\b(para )?el (d[ií]a )?\d{1,2}\b/gi, "")
+       .replace(/\ben \d{1,2} d[ií]as?\b/gi, "").replace(/\b(para )?(la )?(semana que viene|pr[oó]xima semana)\b/gi, "")
+       .replace(/^\s*(una |un |la |el )?(tarea|nota|idea|duda|recordatorio)( de| para| que| sobre)?:?\s*/i, "")
+       .replace(/\s+(de|para|el|la)\s*$/i, "").replace(/\s+/g, " ").trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
+}
+function commandAdd(raw, n){
+  const isNote = /\b(nota|idea|duda|apunte)\b/.test(n) && !/\btarea\b/.test(n);
+  const sub = findSubject(n);
+  if (isNote){
+    const kind = /\bduda\b/.test(n) ? "duda" : /\bidea\b/.test(n) ? "idea" : "apunte";
+    const text = cleanTitle(raw); if (!text) return {html:"¿Qué quieres que apunte? Escríbelo así: <i>apunta una duda: por qué el equilibrio de Nash no es eficiente</i>."};
+    S.notes.push({id:uid(), kind, text, subjectId:sub?.id||"", ts:Date.now()}); save();
+    return {html:`Apuntado en Mente como <b>${KINDS[kind].toLowerCase()}</b>${sub?` de ${esc(sub.name)}`:""}: «${esc(text)}».`, acts:[["Ver en Mente","go","mente"]]};
+  }
+  const type = /\bexamen\b|\bparcial\b/.test(n) ? "examen" : /\bentrega\b|\btrabajo\b|\bensayo\b|\bpractica\b/.test(n) ? "entrega" : /\blectura\b|\bleer\b/.test(n) ? "lectura" : "tarea";
+  const date = parseDate(n);
+  let title = cleanTitle(raw);
+  if (type === "examen") title = sub ? (/parcial/i.test(title) ? "Parcial" : "Examen") + " de " + sub.name : (/examen|parcial/i.test(title) ? title : "Examen" + (title ? " " + title : ""));
+  if (!title) return {html:"¿Qué tarea añado? Prueba con: <i>añade entrega del ensayo de Ciencia Política para el viernes</i>."};
+  const t = addTask({title, subjectId:sub?.id||"", type, due:date, plan:date === dkey() ? date : ""});
+  checkBadges();
+  const acts = [["Ver en Plan","go","plan"]];
+  if (type === "examen" && date) acts.unshift(["Crear plan de repaso","exam-plan",t.id]);
+  if (type !== "examen") acts.unshift(["Hacerla hoy","today",t.id]);
+  return {html:`Hecho: he añadido <b>«${esc(title)}»</b>${sub?` (${esc(sub.name)})`:""}${date?` para <b>${whenTxt(date)}</b>`:" sin fecha"}.${!sub && S.subjects.length ? " No he reconocido la asignatura; puedes cambiarla tocando la tarea en Plan." : ""}`, acts};
+}
+function planTodayHtml(){
+  const ck = todayCheck(), cap = capacity(), f = S.settings.focus, b = S.settings.brk;
+  const rem = Math.max(S.settings.dailyGoal - minutesOn(dkey()), f);
+  let blocks = Math.min(ck?.energy === "baja" ? 2 : 6, Math.max(1, Math.ceil(rem / f)));
+  const today = dkey();
+  const pool = [...S.tasks.filter(t => !t.done && t.plan === today), ...S.tasks.filter(t => !t.done && t.type !== "examen" && t.plan !== today && (!t.plan || t.plan < today)).sort(byDue)].slice(0, cap);
+  const ex = nextExam();
+  const d = new Date(); d.setMinutes(Math.ceil((d.getMinutes()+5)/5)*5, 0, 0);
+  const hm = x => pad(x.getHours()) + ":" + pad(x.getMinutes());
+  const rows = [];
+  for (let i = 0; i < blocks; i++){
+    const s = new Date(d); d.setMinutes(d.getMinutes() + f);
+    const t = pool[i % Math.max(1, pool.length)];
+    const what = t ? esc(t.title) : ex ? "Repaso para «" + esc(ex.title) + "»" : weakestSubject() ? "Estudio de " + esc(weakestSubject().name) : "Lo que tengas más pendiente";
+    rows.push(`<li><b>${hm(s)}–${hm(d)}</b> · ${what}</li>`);
+    if (i < blocks-1){ const pb = (i+1) % (S.settings.longEvery||4) === 0 ? S.settings.longBrk : b; const s2 = new Date(d); d.setMinutes(d.getMinutes() + pb); rows.push(`<li class="muted">${hm(s2)}–${hm(d)} · pausa${pb > b ? " larga" : ""}: muévete, agua, nada de redes</li>`); }
+  }
+  if (d.getHours() >= 23 || d.getDate() !== new Date().getDate()) return `Es tarde para un plan largo. Hoy mejor un solo bloque corto y a dormir: dormir bien consolida lo que has estudiado.`;
+  return `${ck?.energy === "baja" ? "Con energía baja, plan corto:" : "Tu plan para lo que queda de hoy:"}<ul>${rows.join("")}</ul>${pool.length ? "" : "No tienes tareas para hoy; añade alguna en Plan o dime «añade…». "}Termina a las ${hm(d)}. Si algo no sale, se pasa a mañana sin drama.`;
+}
+function coachReply(raw){
+  const n = norm(raw), nm = firstName();
+  const ex = nextExam(), nt = nextTask(), m = minutesOn(dkey()), g = S.settings.dailyGoal, st = streak(), lv = level();
+  const startAct = nt ? ["Empezar con «" + clip(nt.title, 24) + "»", "focus", nt.id] : ["Empezar un bloque", "focus", ""];
+  // commands
+  if (/^(a[nñ]ade|anade|agrega|crea|apunta|anota|recuerdame|apuntame|guarda)\b/.test(n) || /^pon(me)? (un |una )?(tarea|examen|entrega|recordatorio)/.test(n)) return commandAdd(raw, n);
+  if (/(empieza|empezar|empecemos|inicia|iniciar|arranca|ponme|pon|comenzar|comienza|vamos a)\b.*\b(foco|bloque|pomodoro|temporizador|cronometro|a estudiar|estudiar)\b/.test(n)){
+    const mm = n.match(/(\d{1,3}) ?(min|minutos|m\b)?/); const mins = mm ? Math.min(180, Math.max(1, +mm[1])) : S.settings.focus;
+    return {html:`Vamos: bloque de <b>${mins} min</b>${nt ? ` con «${esc(nt.title)}»` : ""}. Móvil lejos.`, acts:[["Empezar ahora","focus",(nt?nt.id:"") + "|" + mins]]};
+  }
+  if (/\b(respira|respirar|respiracion)\b/.test(n)) return {html:"Buena idea. Un minuto de respiración en caja (4 segundos inhalar, 4 mantener, 4 exhalar, 4 mantener) baja las pulsaciones.", acts:[["Respirar 1 minuto","breath",""]]};
+  if (/\b(repasar|repaso|tarjetas|flashcards?)\b/.test(n) && !/examen/.test(n)){ const dc = dueCards().length; return {html: dc ? `Tienes <b>${dc}</b> tarjeta${dc>1?"s":""} para hoy. Intenta responder antes de girarlas: equivocarte ahora es lo que fija el recuerdo.` : `No tienes tarjetas pendientes hoy. Crea algunas con los conceptos clave del último tema: el repaso activo es la técnica que más rinde.`, acts:[[dc?"Repasar ahora":"Crear tarjetas", dc?"review":"go", dc?"":"repasar"]]}; }
+  // concept questions take priority when phrased as a question
+  const askConcept = /\b(que es|que son|que significa|explica|explicame|define|definicion|quien es|quien fue|que fue|que dice|resume|hablame de|que opina|en que consiste|teoria de)\b/.test(n);
+  const c = findConcept(raw);
+  if (c && (askConcept || n.split(" ").length <= 4)) return conceptReply(c);
+  const intent = detectIntent(n);
+  const R = INTENT_REPLIES[intent];
+  if (R) return R({n, raw, nm, ex, nt, m, g, st, lv, startAct});
+  if (c) return conceptReply(c);
+  const q = raw.trim().slice(0, 120);
+  return {html:`No tengo una respuesta exacta para eso: soy un coach sin IA y sé de estudio, motivación, tus datos y los conceptos básicos de tus asignaturas. Puedes:<ul><li>Buscarlo en <a href="https://es.wikipedia.org/w/index.php?search=${encodeURIComponent(q)}" target="_blank" rel="noopener">Wikipedia</a> o en tus apuntes.</li><li>Guardarlo como duda y preguntarlo en clase o en tutoría.</li></ul>Prueba también con «qué hago ahora», «plan para hoy», «estoy agobiado» o «explícame el óptimo de Pareto».`, acts:[["Guardar como duda","duda",q]]};
+}
+function conceptReply(c){
+  const rel = KB_N.filter(x => x !== c && x.area === c.area).slice(0, 3);
+  return {html:`<b>${esc(c.t)}</b> <span class="muted">· ${esc(c.area)}</span><br>${esc(c.d)}<br><span class="muted small">Para fijarlo: explícalo con tus palabras en voz alta como si se lo contaras a alguien de primero (técnica Feynman).</span>${rel.length ? `<br><span class="small muted">Relacionado: ${rel.map(r => esc(r.t)).join(" · ")}</span>`:""}`, acts:[["Crear tarjeta","card",c.t]]};
+}
+const INTENT_REPLIES = {
+  who: () => ({html:`Soy tu coach de estudio. No uso IA, pero conozco tus tareas, exámenes, horas y racha, y sé bastante de técnicas de estudio y de tus asignaturas. Puedes pedirme:<ul><li><b>Órdenes</b>: «añade examen de Matemáticas el jueves», «apunta una duda: …», «empieza un bloque de 50 min».</li><li><b>Organización</b>: «qué hago ahora», «plan para hoy», «organízame la semana», «cómo voy».</li><li><b>Ánimo</b>: «estoy agobiado», «no tengo ganas», «me distraigo con el móvil», «tengo miedo al examen».</li><li><b>Estudio</b>: «cómo estudio Derecho Constitucional», «cómo hago un comentario de texto», «explícame el velo de ignorancia».</li></ul>`}),
+  greet: (x) => ({html:`${pick(["Hola","¡Buenas","Hey"])}${x.nm?", "+esc(x.nm):""}. ${coachBrief()}`, acts:[x.startAct, ["Plan para hoy","say","plan para hoy"]]}),
+  thanks: (x) => ({html: pick(["Para eso estoy. Ahora, a por el siguiente bloque.","A ti. Lo difícil lo haces tú; yo solo te recuerdo el camino.","De nada. Recuerda canjear tus monedas cuando toque: te las ganas."]) , acts:[x.startAct]}),
+  status: (x) => {
+    const wk = weekMinBySubject(), wkTot = Object.values(wk).reduce((a,b) => a+b, 0);
+    const top = S.subjects.slice().sort((a,b) => (wk[b.id]||0) - (wk[a.id]||0))[0], weak = weakestSubject();
+    return {html:`Hoy llevas <b>${fmtMin(x.m)}</b> de ${fmtMin(x.g)}${x.m >= x.g ? " (meta cumplida)" : ""}. Esta semana: <b>${hours(wkTot)} h</b>. Racha: <b>${x.st} día${x.st===1?"":"s"}</b> (mejor: ${bestStreak()}). Nivel <b>${x.lv.n}</b>, ${esc(x.lv.title)}, con ${coins()} monedas.${top && wk[top.id] ? `<br>Lo que más has trabajado: ${esc(top.name)} (${hours(wk[top.id])} h).` : ""}${weak && weak !== top ? ` Lo que menos: ${esc(weak.name)}; dale un bloque esta semana.` : ""}`, acts:[["Ver progreso","go","progreso"]]};
+  },
+  whatnow: (x) => {
+    if (x.ex && dueInfo(x.ex.due).n <= 7) return {html:`Prioridad clara: <b>${esc(x.ex.title)}</b>, ${whenTxt(x.ex.due)}. ${x.nt && x.nt.examId === x.ex.id ? "Toca la sesión de repaso de hoy." : "Haz un bloque de ejercicios o preguntas de examen: practicar recuperando vale más que releer."}`, acts:[["Empezar repaso","focus",(x.nt && x.nt.subjectId === x.ex.subjectId ? x.nt.id : "") + "|" + S.settings.focus + "|" + x.ex.subjectId], ...(S.tasks.some(t => t.examId === x.ex.id) ? [] : [["Crear plan de repaso","exam-plan",x.ex.id]])]};
+    if (x.nt) return {html:`Empieza por <b>«${esc(x.nt.title)}»</b>${x.nt.due ? `, que vence ${whenTxt(x.nt.due)}` : ""}. Solo un bloque; luego decides. Antes de empezar, escribe qué quieres tener hecho al final del bloque.`, acts:[x.startAct]};
+    const w = weakestSubject();
+    return {html: w ? `No tienes tareas pendientes. Dale un bloque a <b>${esc(w.name)}</b>, la asignatura que menos has trabajado esta semana: repasa el último tema y crea 5 tarjetas.` : `Añade tus asignaturas y tareas en Plan y te diré por dónde empezar.`, acts: w ? [["Empezar un bloque","focus","|" + S.settings.focus + "|" + w.id]] : [["Ir a Plan","go","plan"]]};
+  },
+  plantoday: () => ({html: planTodayHtml(), acts:[["Empezar el primer bloque","focus",(nextTask()?.id||"")]]}),
+  week: () => {
+    const start = monday(), end = addDays(start, 6);
+    const due = S.tasks.filter(t => !t.done && t.due && t.due >= dkey() && t.due <= addDays(dkey(), 7)).sort(byDue);
+    return {html:`Para organizar la semana: <ul><li>Mira qué vence en los próximos 7 días${due.length ? ": " + due.slice(0,5).map(t => `<b>${esc(clip(t.title,40))}</b> (${whenTxt(t.due)})`).join(", ") : " (nada con fecha)"}.</li><li>En Plan, Semana, reparte cada tarea en un día concreto, como mucho 3 horas planificadas por día.</li><li>Deja un día con menos carga como colchón para imprevistos.</li><li>El domingo, revisión semanal de 10 minutos en Progreso.</li></ul>`, acts:[["Abrir la semana","plan-week",""]]};
+  },
+  exam: (x) => {
+    if (!x.ex) return {html:`No tienes exámenes pendientes apuntados.${S.tasks.some(t => t.type === "examen" && t.done && t.due && t.due >= dkey()) ? " Ojo: tienes un examen futuro marcado como hecho. Si fue sin querer, desmárcalo en Plan, Lista, Ver hechas." : ""} Apúntalo así: <i>añade examen de Matemáticas el jueves</i>, y te creo un plan de repaso espaciado.`, acts:[["Ver hechas en Plan","go","plan"]]};
+    const n = dueInfo(x.ex.due).n, hasPlan = S.tasks.some(t => t.examId === x.ex.id);
+    const tip = n <= 1 ? "Hoy: repaso ligero de esquemas y fórmulas, nada nuevo, y a dormir pronto. Dormir consolida la memoria más que una noche en vela." : n <= 3 ? "Haz un simulacro con un examen de otros años, cronometrado y sin apuntes. Luego repasa solo lo que fallaste." : n <= 7 ? "Alterna temas en cada bloque (práctica intercalada) y haz preguntas tipo examen. Releer da sensación de dominio, pero recordar es lo que funciona." : "Tienes margen: reparte el temario en sesiones espaciadas y crea tarjetas de los conceptos clave.";
+    return {html:`<b>${esc(x.ex.title)}</b> es ${whenTxt(x.ex.due)} (${n} día${n===1?"":"s"}). ${tip}${hasPlan ? "" : "<br>Aún no tienes plan de repaso para este examen."}`, acts: hasPlan ? [["Empezar repaso","focus","|" + S.settings.focus + "|" + x.ex.subjectId]] : [["Crear plan de repaso","exam-plan",x.ex.id], ["Empezar repaso","focus","|" + S.settings.focus + "|" + x.ex.subjectId]]};
+  },
+  examanx: () => ({html:`Los nervios antes de un examen son normales: tu cuerpo se prepara para rendir. Para que no te bloqueen:<ul><li>Practica en condiciones de examen (cronometrado, sin apuntes): lo conocido asusta menos.</li><li>Escribe 10 minutos lo que te preocupa antes del examen; está comprobado que reduce la ansiedad.</li><li>En el examen, empieza por la pregunta que mejor sabes. Si te quedas en blanco, respira, escribe palabras clave del tema y el hilo vuelve.</li></ul>Lo que depende de ti es prepararte; la nota exacta no.`, acts:[["Respirar 1 minuto","breath",""],["Escribir lo que me preocupa","dump",""]]}),
+  agobio: (x) => ({html:`${x.nm ? esc(x.nm) + ", p" : "P"}ara un momento. No tienes que resolverlo todo hoy, solo lo siguiente. Haz esto:<ul><li>1 minuto de respiración.</li><li>Saca todo de la cabeza en una descarga mental, una cosa por línea.</li><li>Elige la tarea más pequeña y haz solo 10 minutos.</li></ul>El agobio viene de ver la montaña entera; nosotros vamos piedra a piedra.`, acts:[["Respirar","breath",""],["Descarga mental","dump",""],["Solo 10 minutos","focus",(smallest()?.id||"") + "|10"]]}),
+  sad: () => ({html:`Siento que estés así. Hoy no hace falta rendir al máximo: un bloque pequeño o simplemente descansar bien también vale. Habla con alguien de confianza, sal a caminar 15 minutos o escribe lo que sientes en Mente.<br>Si esto dura semanas, no duermes o nada te apetece, pide cita en el servicio de atención psicológica de la UPF: es gratuito para estudiantes y pedir ayuda también es cuidarte.`, acts:[["Ir a Calma","go","calma"]]}),
+  fail: (x) => ({html:`Un mal día o un mal resultado no te define; es información. Pregúntate qué falló (¿tiempo, método, descanso?) y cambia una sola cosa. ${x.st ? `Recuerda que llevas ${x.st} día${x.st>1?"s":""} de racha y ` : ""}${S.sessions.length ? `ya has hecho ${S.sessions.length} bloques de estudio: eso no desaparece.` : "cada bloque que hagas cuenta."} Mañana empieza en blanco.`, acts:[x.startAct, ["Cerrar el día","go","hoy"]]}),
+  nomot: (x) => ({html:`${S.settings.why ? `Recuerda tu porqué: <i>«${esc(S.settings.why)}»</i>. ` : ""}La motivación casi nunca llega antes de empezar; llega después. Comprométete solo a <b>5 minutos</b>. Si después quieres parar, para. ${coins() ? `Además, con cada 5 minutos ganas 1 moneda: tienes ${coins()}.` : ""}`, acts:[["Solo 5 minutos","focus",(x.nt?.id||"") + "|5"], ["Ver recompensas","go","progreso"]]}),
+  procras: (x) => ({html:`Procrastinar no es pereza: es evitar una emoción incómoda (aburrimiento, miedo a hacerlo mal). Trucos que funcionan:<ul><li>Haz la tarea ridículamente pequeña: «abrir el PDF y leer una página».</li><li>Decide dónde y cuándo: «a las 17:00 en la biblioteca, ejercicios del tema 3».</li><li>Quita la fricción: móvil en otra habitación, solo una pestaña abierta.</li></ul>`, acts:[["Empezar 10 minutos","focus",(x.nt?.id||"") + "|10"]]}),
+  focus: () => ({html:`Para concentrarte más:<ul><li>Antes del bloque, escribe qué quieres conseguir en concreto.</li><li>Móvil fuera de la habitación, no solo boca abajo.</li><li>Cada vez que te distraigas, pulsa «Me he distraído» y vuelve sin juzgarte: la atención se entrena así.</li><li>Prueba el ruido marrón o la lluvia de Foco y el modo zen.</li><li>Si te cuesta mucho, bloques de 15 minutos y ve subiendo.</li></ul>`, acts:[["Ir a Foco","go","foco"]]}),
+  phone: () => ({html:`El móvil es el mayor ladrón de concentración: aunque no lo mires, tenerlo a la vista reduce tu rendimiento. Lo que funciona:<ul><li>Fuera de la habitación durante el bloque.</li><li>Modo «No molestar» o modo concentración con solo llamadas de favoritos.</li><li>Las redes, solo en la pausa larga y con temporizador.</li><li>Quita las notificaciones de todo lo que no sea una persona.</li></ul>`, acts:[["Empezar un bloque sin móvil","focus",""]]}),
+  tired: () => ({html:`Estudiar cansado rinde poco. Opciones:<ul><li>Si es sueño de verdad, una siesta de 20 minutos (no más) o dormir antes hoy: el sueño consolida lo estudiado.</li><li>Si es cansancio mental, 10 minutos de paseo o estiramientos y agua.</li><li>Cambia a algo ligero: repasar tarjetas o organizar la semana.</li></ul>Intenta dormir 7–9 horas; las noches en vela antes de un examen empeoran la nota.`, acts:[["Repasar tarjetas","review",""]]}),
+  howstudy: () => ({html:`Las técnicas con más evidencia:<ul><li><b>Recuerdo activo</b>: cierra los apuntes y escribe o di lo que recuerdas. Mucho mejor que releer o subrayar.</li><li><b>Repetición espaciada</b>: repasa a los 1, 3, 7 y 14 días. La sección Repasar lo hace por ti.</li><li><b>Práctica intercalada</b>: mezcla tipos de ejercicios o temas.</li><li><b>Feynman</b>: explícalo como a alguien de primero; donde te atascas, ahí está el hueco.</li><li><b>Ejemplos concretos</b>: conecta cada concepto con un caso real.</li></ul>`, acts:[["Crear tarjetas","go","repasar"]]}),
+  notes: () => ({html:`Apuntes que sirven: escribe con tus palabras, no copies. Usa el método Cornell: a la derecha las notas, a la izquierda preguntas clave, abajo un resumen de 2 líneas. Tras cada clase, convierte 3–5 ideas en tarjetas. Subrayar sin más da sensación de estudiar pero apenas ayuda a recordar.`, acts:[["Crear tarjetas","go","repasar"]]}),
+  math: () => ({html:`Matemáticas se aprende haciendo, no leyendo:<ul><li>Primero intenta el ejercicio sin mirar la solución; atascarse un rato es parte del aprendizaje.</li><li>Después compara y apunta el error en una hoja de errores típicos.</li><li>Mezcla tipos de problemas (derivadas, optimización, matrices) para aprender a reconocer cuál toca.</li><li>Haz los exámenes de otros años cronometrados.</li><li>Si un paso no lo entiendes, apúntalo como duda y llévalo a tutoría.</li></ul>`, acts:[["Bloque de ejercicios (50 min)","focus","|50|" + (S.subjects.find(s => /matem/i.test(s.name))?.id||"")]]}),
+  philo: () => ({html:`Para Filosofía:<ul><li>Para cada autor, una ficha: problema que intenta resolver, tesis, argumentos y críticas.</li><li>Comentario de texto: 1) sitúa autor y obra, 2) idea principal en una frase, 3) estructura argumentativa, 4) relación con el resto de su pensamiento, 5) valoración crítica o actualidad.</li><li>Compara autores sobre el mismo tema (Hobbes, Locke y Rousseau sobre el contrato social): es lo que suelen preguntar.</li></ul>`, acts:[["Explícame el contrato social","say","explícame el contrato social"]]}),
+  politics: () => ({html:`En Ciencia Política, domina los conceptos (Estado, legitimidad, democracia, sistemas electorales) y conéctalos con casos reales: España, la UE o elecciones recientes. Para cada tema: definición, autor de referencia y un ejemplo actual. Leer prensa internacional 10 minutos al día también es estudiar.`, acts:[["Explícame la ley D'Hondt","say","que es la ley d'hondt"]]}),
+  law: () => ({html:`Para Derecho Constitucional:<ul><li>Estudia con la Constitución al lado y localiza cada artículo que se menciona.</li><li>Haz esquemas de procedimientos (reforma, moción de censura, recurso de amparo) como diagramas de pasos.</li><li>Memoriza los números de artículos clave con tarjetas.</li><li>Practica casos prácticos: identifica qué derecho está en juego y qué vía de protección hay.</li></ul>`, acts:[["Explícame la reforma constitucional","say","que es la reforma constitucional"]]}),
+  history: () => ({html:`Para Historia: primero una línea del tiempo con los grandes periodos, luego rellena. Para cada acontecimiento: causas, desarrollo, consecuencias. Las fechas se fijan mejor con tarjetas y conectándolas entre sí (la crisis del 29 ayuda a entender el ascenso del fascismo). Relaciona siempre con la Política y la Economía de tu grado.`, acts:[["Crear tarjetas de fechas","go","repasar"]]}),
+  essay: () => ({html:`Estructura de un ensayo o trabajo:<ul><li>Introducción: contexto, pregunta y tesis en una frase.</li><li>Desarrollo: un argumento por párrafo, con evidencia o autor.</li><li>Objeción principal y tu respuesta: sube mucho la nota.</li><li>Conclusión: responde a la pregunta, sin ideas nuevas.</li></ul>Escribe un primer borrador rápido y feo; corregir es más fácil que empezar. Cita siempre (APA o el estilo que pida el profesor).`, acts:[["Añadir tarea de ensayo","say","añade entrega del ensayo"]]}),
+  oral: () => ({html:`Para una exposición: una idea por diapositiva, poco texto, y ensaya en voz alta 2 o 3 veces cronometrando. Empieza con una pregunta o un dato que enganche y termina con la idea que quieres que recuerden. Los nervios bajan muchísimo con el ensayo.`}),
+  group: () => ({html:`Trabajos en grupo sin dramas: el primer día repartid tareas con nombre y fecha, poned una fecha interna 2 días antes de la entrega real y usad un documento compartido. Si alguien no aporta, habladlo pronto y con hechos concretos.`}),
+  reading: () => ({html:`Para lecturas largas: primero un vistazo (índice, introducción, conclusiones), luego lee con una pregunta en mente. Al acabar cada sección, cierra el texto y escribe 3 líneas de lo que dice. Divide la lectura en bloques de 25 minutos y apúntala como tarea de tipo Lectura.`, acts:[["Empezar a leer (25 min)","focus","|25"]]}),
+  time: () => { const tot = S.subjects.reduce((a,s) => a + (s.weekly??4), 0); return {html:`Un crédito ECTS son 25–30 horas de trabajo total. Con ${S.subjects.length || 5} asignaturas de 6 ECTS, calcula unas ${tot || 20} horas de estudio propio a la semana además de las clases. Tu meta diaria está en ${fmtMin(S.settings.dailyGoal)}; constancia antes que maratones: 2 horas diarias ganan a 10 horas el domingo.`, acts:[["Ajustar meta","settings",""]]}; },
+  breaks: () => ({html:`Las pausas son parte del estudio: el cerebro consolida mientras descansas. En la pausa, levántate, camina, bebe agua o mira por la ventana. Evita las redes: no descansan la atención. Cada 4 bloques, pausa larga de 15–30 minutos.`}),
+  health: () => ({html:`Lo básico rinde más que cualquier truco: dormir 7–9 horas, moverte a diario (30 minutos de paseo mejoran la memoria), comer de verdad y beber agua. El café ayuda, pero no después de las 16:00 si quieres dormir bien.`}),
+  rewards: () => {
+    if (!S.rewards.length) return {html:`No tienes recompensas. Añade en Progreso cosas que te apetezcan de verdad y ponles precio en monedas.`, acts:[["Ir a Progreso","go","progreso"]]};
+    return {html:`Tienes <b>${coins()} monedas</b> (ganas 1 por cada 5 minutos de foco).<ul>${S.rewards.map(r => { const need = rewardNeed(r); return `<li>${esc(r.text)} (${r.cost}): ${need ? `te faltan unos <b>${fmtMin(need)}</b> de estudio` : "<b>ya puedes canjearla</b>"}</li>`; }).join("")}</ul>`, acts:[["Ver recompensas","go","progreso"]]};
+  },
+  why: () => ({html: S.settings.why ? `Tu porqué: <i>«${esc(S.settings.why)}»</i>. Cada bloque de hoy es un paso concreto hacia eso.` : `Aún no has escrito tu porqué. Piensa para qué estudias esto y escríbelo en Ajustes: los días difíciles, te lo recordaré.`, acts: S.settings.why ? [["Empezar un bloque","focus",""]] : [["Escribir mi porqué","settings",""]]}),
+  career: () => ({html:`FPE es una base muy buena para relaciones internacionales y organismos como la UE, la OTAN o la ONU. Pasos útiles durante el grado:<ul><li>Idiomas: inglés alto y un tercero (francés es clave en la UE).</li><li>Erasmus o intercambio, y prácticas en ONGs, think tanks o administraciones.</li><li>Seguir la actualidad internacional a diario y escribir sobre ella.</li><li>A medio plazo: un máster en Relaciones Internacionales o Estudios Europeos (por ejemplo, el College of Europe), las Blue Book traineeships de la Comisión Europea y las oposiciones EPSO, o la carrera diplomática.</li></ul>Lo que estudias hoy (Ciencia Política, Historia Contemporánea, Derecho Constitucional) es justo la base de eso.`, acts:[["Explícame el realismo","say","que es el realismo en relaciones internacionales"]]}),
+  upf: () => ({html:`Recursos de la UPF que ayudan: tutorías con el profesorado (pregunta tus dudas apuntadas en Mente), materiales y exámenes de otros años en Aula Global, salas de estudio de la biblioteca y el servicio de atención psicológica si lo necesitas. Ir a tutoría con preguntas concretas es de lo más rentable que hay.`, acts:[["Ver mis dudas","go","mente"]]}),
+  quote: () => { const q = pick(QUOTES); return {html:`«${esc(q[0])}»<br><span class="muted small">${esc(q[1])}</span>`}; }
+};
+function vCoach(){
+  if (!coachMsgs.length) coachMsgs.push({role:"ai", html:`Hola${firstName() ? ", " + esc(firstName()) : ""}. Soy tu coach. ${coachBrief()}<br><span class="small muted">Pregúntame qué hacer, pídeme un plan, cuéntame cómo estás o dame órdenes como «añade examen de Matemáticas el jueves».</span>`, acts:[["Qué hago ahora","say","qué hago ahora"],["Plan para hoy","say","plan para hoy"]]});
+  const chips = ["¿Qué hago ahora?","Plan para hoy","¿Cómo voy?","Estoy agobiado","No tengo ganas","Mi próximo examen","¿Cuánto me falta para mis recompensas?","¿Cómo estudio mejor?","Explícame el contrato social","¿Qué puedes hacer?"];
+  return header("Coach", "Tu entrenador de estudio, siempre disponible", coachMsgs.length > 1 ? `<button class="btn ghost sm" data-act="coach-clear">Borrar chat</button>` : "") + `
+  <section class="card"><div class="chat coach" id="coach-chat" aria-live="polite">${coachMsgs.map((m,i) => m.role === "me" ? `<div class="msg me">${esc(m.text)}</div>` : `<div class="msg ai">${m.html}${m.acts && m.acts.length ? `<div class="row" style="margin-top:8px">${m.acts.map((a,j) => `<button class="btn sm" data-act="coach-do" data-i="${i}" data-j="${j}">${esc(a[0])}</button>`).join("")}</div>` : ""}</div>`).join("")}</div>
+    <div class="row">${chips.map(c => `<button class="chip" data-act="coach-chip" data-q="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    <div class="row"><input type="text" id="coach-in" placeholder="Escribe lo que quieras…" style="flex:1" autocomplete="off"><button class="btn primary" data-act="coach-send">Enviar</button></div>
+  </section>`;
+}
+function coachAsk(text){
+  text = String(text||"").trim(); if (!text) return;
+  coachMsgs.push({role:"me", text});
+  let r; try { r = coachReply(text); } catch(e){ r = {html:"Algo se me ha cruzado. Prueba a decirlo de otra forma."}; }
+  coachMsgs.push({role:"ai", html:r.html, acts:r.acts||[]});
+  saveCoach();
+  if (view === "coach"){ render(); const c = $("#coach-chat"); if (c) c.scrollTop = c.scrollHeight; $("#coach-in")?.focus(); }
+}
+function coachDo(kind, arg){
+  if (kind === "say") return coachAsk(arg);
+  if (kind === "go") return go(arg);
+  if (kind === "settings") return openSettings();
+  if (kind === "plan-week"){ planTab = "semana"; return go("plan"); }
+  if (kind === "breath"){ breathStop(); br.on = true; go("calma"); setTimeout(() => breathStep(0), 80); br.end = setTimeout(() => { if (br.on){ breathStop(); if (view === "calma") render(); toast("Un minuto hecho. ¿Siguiente paso?"); } }, 64000); return; }
+  if (kind === "dump"){ noteKind = "descarga"; go("mente"); setTimeout(() => $("#note-text")?.focus(), 50); return; }
+  if (kind === "review") return startReview("");
+  if (kind === "today"){ const t = S.tasks.find(x => x.id === arg); if (t){ t.plan = dkey(); save(); toast("Planificada para hoy"); } return; }
+  if (kind === "exam-plan"){ const t = S.tasks.find(x => x.id === arg); if (t){ const n = examPlan(t); toast(n ? "Creadas " + n + " sesiones de repaso" : "Demasiado cerca para un plan espaciado"); coachAsk("mi próximo examen"); } return; }
+  if (kind === "duda"){ S.notes.push({id:uid(), kind:"duda", text:arg, subjectId:"", ts:Date.now()}); save(); toast("Guardada como duda en Mente"); return; }
+  if (kind === "card"){ const c = KB_N.find(x => x.t === arg); if (c && !S.cards.some(k => k.q === "Explica: " + c.t)){ S.cards.push({id:uid(), subjectId:(S.subjects.find(s => c.area.toLowerCase().includes(norm(s.name).split(" ")[0]))||{}).id||"", q:"Explica: " + c.t, a:c.d, due:dkey(), created:Date.now()}); save(); toast("Tarjeta creada en Repasar"); } return; }
+  if (kind === "focus"){
+    const [tid, mins, sid] = String(arg||"").split("|");
+    const t = tid ? S.tasks.find(x => x.id === tid) : null;
+    if (!t && sid){ T.subjectId = sid; T.taskId = ""; }
+    return startFocusOn(t, mins ? +mins : 0);
+  }
+}
+
 /* ================= modals ================= */
 let resetArm = false;
 const closeModal = () => { $("#modal-root").innerHTML = ""; resetArm = false; };
@@ -1246,6 +1736,7 @@ function openMore(){
   modal(`<div class="card-h"><h2>Más</h2><button class="btn ghost sm" data-act="modal-close">Cerrar</button></div>
     <div class="sheet-list">
       <button data-go="repasar">${ICON.repasar}<div>Repasar<span>${dueCards().length} tarjetas para hoy</span></div></button>
+      <button data-go="mente">${ICON.mente}<div>Mente<span>Notas, dudas y descarga mental</span></div></button>
       <button data-go="progreso">${ICON.progreso}<div>Progreso<span>Nivel ${level().n}, logros y recompensas</span></div></button>
       <button data-go="calma">${ICON.calma}<div>Calma<span>Respiración y plan anti-agobio</span></div></button>
       <button data-act="settings">${ICON.settings}<div>Ajustes<span>Metas, tema y copia de seguridad</span></div></button>
@@ -1280,6 +1771,7 @@ function openSettings(){
     ${!IN_CLAUDE && "Notification" in window ? `<label class="chk"><input type="checkbox" id="s-notify" ${st.notify?"checked":""}> Avisarme cuando acabe un bloque aunque esté en otra pestaña</label>`:""}
     <button class="btn primary" data-act="s-save" style="align-self:flex-start">Guardar ajustes</button>
     <hr class="hr">
+    ${syncSection()}
     <div class="eyebrow">Tus datos</div>
     <p class="small muted"><span data-sync class="sync"></span><br>Ocupan ${size} KB. Para pasarlos entre la versión de Claude y la web (u otro navegador), descarga o copia una copia aquí y restáurala allí.</p>
     <div class="row"><button class="btn sm" data-act="s-download">Descargar copia (.json)</button><button class="btn sm" data-act="s-export">Copiar como texto</button></div>
@@ -1463,6 +1955,13 @@ document.addEventListener("click", e => {
     case "go-dump": noteKind = "descarga"; go("mente"); setTimeout(() => $("#note-text")?.focus(), 50); break;
     case "ten-min": breathStop(); startFocusOn(smallest() || null, 10); break;
     case "five-min": breathStop(); startFocusOn(smallest() || null, 5); toast("Solo 5 minutos. Si luego quieres seguir, genial."); break;
+    case "coach-send": { const i = $("#coach-in"); const v = i.value; i.value = ""; coachAsk(v); break; }
+    case "coach-chip": coachAsk(a.dataset.q); break;
+    case "coach-clear": coachMsgs = []; saveCoach(); render(); break;
+    case "coach-do": { const m = coachMsgs[+a.dataset.i], ac = m && m.acts && m.acts[+a.dataset.j]; if (ac) coachDo(ac[1], ac[2]); break; }
+    case "sync-connect": { const v = $("#sync-token").value.trim(); if (!v){ toast("Pega primero el token."); break; } a.disabled = true; a.textContent = "Conectando…"; gistConnect(v); break; }
+    case "sync-now": gistSync().then(() => { toast(syncErr || "Sincronizado"); if ($("#modal-root").innerHTML) openSettings(); }); break;
+    case "sync-off": sync = {}; saveSyncCfg(); paintSync(); openSettings(); toast("Este dispositivo ya no sincroniza. Tus datos siguen aquí."); break;
     case "ctl-add": { const v = $("#ctl-in").value.trim(); if (!v) break; S.control.push({id:uid(), text:v, v:a.dataset.v}); save(); render(); setTimeout(() => $("#ctl-in")?.focus()); break; }
     case "ctl-task": { const c = S.control.find(x => x.id === a.dataset.id); addTask({title:c.text}); S.control = S.control.filter(x => x !== c); save(); render(); toast("Convertido en tarea en Plan"); break; }
     case "ctl-drop": S.control = S.control.filter(x => x.id !== a.dataset.id); save(); render(); toast("Soltado. No era tuyo de cargar."); break;
@@ -1495,7 +1994,7 @@ document.addEventListener("keydown", e => {
   }
   if (e.key !== "Enter") return;
   if ((id === "note-text" || id === "cap-text") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $(id === "note-text" ? '[data-act="add-note"]' : '[data-act="cap-save"]').click(); return; }
-  const map = {"nt-title":"add-task", "park":"park", "chat-in":"chat-send", "new-subj":"subj-add", "ob-custom":"ob-add", "ctl-in":null, "rw-text":"reward-add", "et-title":"et-save", "cap-text":"cap-save"};
+  const map = {"nt-title":"add-task", "park":"park", "chat-in":"chat-send", "new-subj":"subj-add", "ob-custom":"ob-add", "ctl-in":null, "rw-text":"reward-add", "et-title":"et-save", "cap-text":"cap-save", "coach-in":"coach-send", "sync-token":"sync-connect"};
   if (id in map && map[id] && e.target.tagName === "INPUT") { e.preventDefault(); $(`[data-act="${map[id]}"]`)?.click(); }
   if (id === "t-int"){ e.preventDefault(); T.intention = e.target.value.trim(); saveTimer(); if (!T.running) $('[data-act="t-toggle"]').click(); }
 });
@@ -1504,5 +2003,6 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && T.
 if (!IN_CLAUDE && "serviceWorker" in navigator && location.protocol === "https:") { try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch(e){} }
 render();
 connect();
+syncInit();
 })();
 </script>
