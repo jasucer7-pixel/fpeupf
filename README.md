@@ -12,6 +12,10 @@ Web para organizar el estudio del grado en Filosofía, Política y Economía (UP
 - **Calendario mensual** con fechas límite y minutos estudiados, y exportación a Google Calendar (.ics) con aviso el día antes de exámenes y entregas.
 - **Hábitos diarios** con rachas y **retos semanales** que dan monedas extra.
 - **Test rápido** de opción múltiple con tus tarjetas, y **buscador global** (Ctrl/⌘ + K o /).
+- **Planificador automático** (Plan → Semana): reparte las tareas sin día en los próximos 14 días según fecha límite, duración, capacidad diaria y día de descanso.
+- **Jardín de foco**: cada bloque planta un brote, una flor, un arbusto o un árbol según su duración, del color de la asignatura. Detecta si sales de la pestaña durante un bloque.
+- **Lecturas** con páginas leídas y páginas por día necesarias; **cuaderno por tema** para explicarlo con tus palabras (técnica Feynman) y convertirlo en tarjeta.
+- **Gráficas** de horas por semana y reparto por asignatura; **deshacer** al borrar y **copias automáticas** diarias (últimas 7).
 - **Coach**: entrenador sin IA que conoce tus tareas, exámenes y horas. Entiende órdenes («añade examen de Matemáticas el jueves», «apunta una duda: …», «empieza un bloque de 50 min»), te dice qué hacer ahora, te hace un plan para hoy, te anima cuando estás agobiado o sin ganas, te da técnicas de estudio por asignatura y explica unos 90 conceptos clave de FPE.
 - **Repasar**: tarjetas con repetición espaciada (estilo Anki), por asignatura, alta masiva con `pregunta :: respuesta`.
 - **Mente**: notas rápidas (apuntes, ideas, dudas, descarga mental), búsqueda, convertir en tarea o tarjeta. Captura rápida desde cualquier pantalla con el botón + o la tecla N.

@@ -13,6 +13,7 @@
   --accent:#2d55c8; --accent-ink:#ffffff; --accent-soft:#e5ebfa;
   --ok:#157a3c; --ok-soft:#e1f3e7; --warn:#a85a06; --warn-soft:#fbefdc; --danger:#b42323; --danger-soft:#fbe4e4;
   --gold:#a8730a; --gold-soft:#f8eed3;
+  --leaf:#3e8a4a; --leaf-2:#62a957; --trunk:#8a5a3b; --soil:#e3d8c6;
   --heat0:#e6e9ef; --heat1:#c3d0f3; --heat2:#8ea7ea; --heat3:#5277db; --heat4:#2d55c8;
   --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body:"Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -25,6 +26,7 @@
   --accent:#86a2ff; --accent-ink:#0e1117; --accent-soft:#1d2849;
   --ok:#5bd28a; --ok-soft:#13291c; --warn:#f2b54a; --warn-soft:#2d2210; --danger:#f58a8a; --danger-soft:#331616;
   --gold:#f0c35a; --gold-soft:#2e2510;
+  --leaf:#4fae5e; --leaf-2:#79c76f; --trunk:#a8774f; --soil:#3a3128;
   --heat0:#1e2330; --heat1:#25345f; --heat2:#3a5299; --heat3:#5c7ad6; --heat4:#86a2ff;
   --shadow:0 1px 2px rgb(0 0 0 / .3); color-scheme:dark}}
 :root[data-theme="dark"]{
@@ -32,6 +34,7 @@
   --accent:#86a2ff; --accent-ink:#0e1117; --accent-soft:#1d2849;
   --ok:#5bd28a; --ok-soft:#13291c; --warn:#f2b54a; --warn-soft:#2d2210; --danger:#f58a8a; --danger-soft:#331616;
   --gold:#f0c35a; --gold-soft:#2e2510;
+  --leaf:#4fae5e; --leaf-2:#79c76f; --trunk:#a8774f; --soil:#3a3128;
   --heat0:#1e2330; --heat1:#25345f; --heat2:#3a5299; --heat3:#5c7ad6; --heat4:#86a2ff;
   --shadow:0 1px 2px rgb(0 0 0 / .3); color-scheme:dark}
 html,body{height:100%}
@@ -338,6 +341,45 @@ button.sbar:hover{background:var(--surface-2)}
 .gs-item span{font-weight:600;overflow-wrap:anywhere}
 .gs-item small{color:var(--muted);font-size:.75rem}
 .grades-list{display:flex;flex-direction:column}
+.toast{display:flex;align-items:center;gap:12px}
+.toast-btn{border:0;background:transparent;color:var(--accent-soft);font-weight:700;text-decoration:underline;padding:0;cursor:pointer}
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:.75rem;font-weight:600;padding:5px 8px;border-radius:7px;white-space:nowrap;z-index:30;pointer-events:none}
+.plant{display:inline-flex;border-radius:8px}
+.garden.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;align-items:end}
+.gday{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.gday b{font-size:.72rem;color:var(--muted)}
+.gday.today b{color:var(--accent)}
+.gplants{display:flex;flex-wrap:wrap-reverse;justify-content:center;align-content:flex-start;min-height:44px;gap:0}
+.gplants .plant svg{width:32px;height:32px}
+.gsoil{height:6px;width:100%;border-radius:999px;background:var(--soil)}
+.garden.wild{display:flex;flex-wrap:wrap;gap:0;align-items:flex-end}
+.garden.wild .plant svg{width:30px;height:30px}
+.grow{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted)}
+.grow svg{flex:none}
+.wchart{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;align-items:end;border-bottom:1px solid var(--line);padding-top:16px}
+.wcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;position:relative}
+.wbar{width:100%;max-width:34px;background:var(--accent);opacity:.55;border-radius:4px 4px 0 0}
+.wcol.now .wbar{opacity:1}
+.wcol:hover .wbar,.wcol:focus-visible .wbar{opacity:.9}
+.wcol b{font-size:.68rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wcol em{position:absolute;font-style:normal;font-size:.72rem;font-weight:700;color:var(--ink);bottom:100%;margin-bottom:0}
+.wcol.now em{position:static;order:-1}
+.wtarget{position:absolute;left:0;right:0;border-top:1.5px dashed var(--muted);pointer-events:none}
+.wtarget span{position:absolute;right:0;top:-16px;font-size:.68rem;color:var(--muted);background:var(--surface);padding:0 4px}
+.share{display:flex;flex-direction:column;gap:8px}
+.srow{display:grid;grid-template-columns:minmax(80px,140px) minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:.85rem}
+.srow .sn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sb{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.srow .sb i{display:block;height:100%;border-radius:999px}
+.srow .sv{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.readings{display:flex;flex-direction:column;gap:14px}
+.reading{display:flex;flex-direction:column;gap:6px}
+.reading .rt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.reading .rt b{overflow-wrap:anywhere}
+.topic .n.link{border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--ink)}
+.topic .n.link:hover{color:var(--accent)}
+.topic .nb{font-size:.7rem;color:var(--muted);font-weight:600;margin-left:6px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -429,16 +471,16 @@ const LEVELS = ["Estudiante de primero","Lector/a de Platón","Discípulo/a de A
 const DEFAULT_REWARDS = [["Un episodio de tu serie",60],["Merienda especial",40],["Tarde libre sin culpa",250],["Plan con amigos",150]];
 
 /* ================= state ================= */
-const defaultSettings = () => ({ focus:25, brk:5, longBrk:15, longEvery:4, autoNext:false, termStart:"2026-09-21", dailyGoal:120, why:"", theme:"auto", notify:false, sound:"", vol:0.4 });
+const defaultSettings = () => ({ focus:25, brk:5, longBrk:15, longEvery:4, autoNext:false, termStart:"2026-09-21", dailyGoal:120, why:"", theme:"auto", notify:false, sound:"", vol:0.4, dayCap:0, restDay:-1, trackExits:(typeof matchMedia === "function" ? !matchMedia("(pointer: coarse)").matches : true) });
 const defaultState = () => ({ v:3, updated:0, onboarded:false, name:"",
-  topics:[], evals:[], links:[], habits:[], habitLog:{}, challenges:{}, reviewLog:{}, topicUps:{},
+  topics:[], evals:[], links:[], habits:[], readings:[], habitLog:{}, challenges:{}, reviewLog:{}, topicUps:{},
   subjects:[], tasks:[], notes:[], sessions:[], checkins:{}, control:[],
   cards:[], timetable:[], journal:{}, reviews:{}, rewards:[], redeemed:[], badges:{}, xp:0, spent:0, goalDays:{},
   settings:defaultSettings() });
 function migrate(raw){
   const s = Object.assign(defaultState(), raw || {});
   s.settings = Object.assign(defaultSettings(), (raw && raw.settings) || {});
-  ["subjects","tasks","notes","sessions","control","cards","timetable","rewards","redeemed","topics","evals","links","habits"].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
+  ["subjects","tasks","notes","sessions","control","cards","timetable","rewards","redeemed","topics","evals","links","habits","readings"].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
   ["checkins","journal","reviews","badges","goalDays","deleted","habitLog","challenges","reviewLog","topicUps"].forEach(k => { if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) s[k] = {}; });
   s.subjects.forEach(x => { if (x.weekly == null) x.weekly = 4; });
   if ((raw && raw.v || 1) < 2){
@@ -459,10 +501,11 @@ let S = defaultState();
 let loadFailed = false;
 try { const raw = localStorage.getItem(LS); if (raw) S = migrate(JSON.parse(raw)); } catch(e){ loadFailed = true; console.error("No se pudieron cargar los datos", e); }
 let dbRef = null, saveT = null, syncMode = "local", downloads = null;
-const idSet = st => { const o = new Set(); ["subjects","tasks","notes","sessions","cards","timetable","rewards","control","topics","evals","links","habits"].forEach(k => (st[k]||[]).forEach(x => x && x.id && o.add(x.id))); return o; };
+const idSet = st => { const o = new Set(); ["subjects","tasks","notes","sessions","cards","timetable","rewards","control","topics","evals","links","habits","readings"].forEach(k => (st[k]||[]).forEach(x => x && x.id && o.add(x.id))); return o; };
 let known = idSet(S);
 function save(){
   if (loadFailed){ toast("No he podido leer tus datos guardados; no sobrescribo nada. Recarga la página."); return; }
+  dailyBackup();
   S.updated = Date.now();
   const now = idSet(S); S.deleted = S.deleted || {};
   known.forEach(id => { if (!now.has(id)) S.deleted[id] = S.updated; }); known = now;
@@ -754,6 +797,7 @@ function vHoy(){
     ${!S.tasks.length ? `<button class="btn" data-go="plan" style="align-self:flex-start">Apuntar entregas y exámenes ${ICON.arrow}</button>`:""}
   </section>
 
+  ${readingsToday()}
   <div class="grid2">${habitsCard()}${challengesCard(false)}</div>
 
   ${(classes.length || dc) ? `<div class="grid2">
@@ -809,6 +853,7 @@ function vFoco(){
   <section class="card"><div class="timer-wrap">
     <div class="ring${isBreak?" brk":""}"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="44"/><circle class="prg" id="prg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg>
       <div class="center"><div class="mode">${!isBreak?"Concentración":T.mode==="long"?"Descanso largo":"Descanso"}</div><div class="time" id="time">${fmt(timeLeft())}</div><div class="small muted">Bloque ${T.cycles + (isBreak?0:1)} de hoy</div></div></div>
+    ${!isBreak ? `<div class="grow">${plantSVG(plantKind(Math.round(T.total/60)), subjColor(T.subjectId), 44, Math.max(.4, 1 - timeLeft()/(T.total||1)), "gp")}<span>Si terminas este bloque plantarás <b style="color:var(--ink)">${PLANT_NAMES[plantKind(Math.round(T.total/60))]}</b> en tu jardín.</span></div>` : ""}
     <div class="row" style="justify-content:center">
       <button class="btn primary lg" data-act="t-toggle">${T.running?ICON.pause+" Pausar":ICON.play+" "+(T.left<T.total?"Seguir":"Empezar")}</button>
       <button class="btn" data-act="t-plus" title="Añadir 5 minutos">+5 min</button>
@@ -850,6 +895,7 @@ function paintTimer(){
   if (el) el.textContent = fmt(left);
   if (zt) zt.textContent = fmt(left);
   if (prg) prg.setAttribute("stroke-dashoffset", String(276.46 * (1 - left / (T.total||1))));
+  const gp = $("#gp"); if (gp) gp.setAttribute("transform", `translate(20 37) scale(${Math.max(.4, 1 - left/(T.total||1)).toFixed(3)}) translate(-20 -37)`);
   document.title = T.running ? fmt(left) + (T.mode==="focus" ? " · Foco" : " · Pausa") : "Segunda Mente FPE";
 }
 function renderZen(){
@@ -899,7 +945,7 @@ function setMode(mode){
   T.mode = mode;
   T.total = (mode === "focus" ? S.settings.focus : mode === "long" ? S.settings.longBrk : S.settings.brk) * 60;
   T.left = T.total; T.running = false; T.endAt = 0;
-  if (mode === "focus") T.distractions = 0;
+  if (mode === "focus"){ T.distractions = 0; T.exits = 0; T.awayAt = 0; }
   saveTimer();
 }
 function startRunning(){ T.running = true; T.endAt = Date.now() + T.left*1000; saveTimer(); keepAwake(true); }
@@ -908,7 +954,7 @@ function finishBlock(auto){
   if (T.mode === "focus"){
     const min = auto ? Math.round(T.total/60) : Math.floor((T.total - timeLeft())/60);
     if (min >= 1){
-      lastSession = {id:uid(), subjectId:T.subjectId||"", taskId:T.taskId||"", min, ts:Date.now(), intention:T.intention||"", distractions:T.distractions||0};
+      lastSession = {id:uid(), subjectId:T.subjectId||"", taskId:T.taskId||"", min, ts:Date.now(), intention:T.intention||"", distractions:T.distractions||0, exits:T.exits||0};
       S.sessions.push(lastSession); gainXP(min); trim(); checkGoal(); checkBadges(); save();
       T.cycles++; T.cyclesDay = dkey();
       setMode(T.cycles % (S.settings.longEvery||4) === 0 ? "long" : "break");
@@ -929,7 +975,7 @@ function finishBlock(auto){
 function openRating(min){
   zen = false; renderZen();
   $("#modal-root").innerHTML = `<div class="modal"><div class="card" role="dialog" aria-modal="true" aria-label="Bloque terminado">
-    <div class="eyebrow">+${min} XP · Bloque ${T.cycles} de hoy</div>
+    <div class="row">${plantSVG(plantKind(min), subjColor(lastSession?.subjectId), 56)}<div class="eyebrow">+${min} XP · Bloque ${T.cycles} de hoy<br><span style="text-transform:none;letter-spacing:0">Has plantado ${PLANT_NAMES[plantKind(min)]} en tu jardín</span></div></div>
     <h2>${BLOCK_CHEERS[Math.floor(Math.random()*BLOCK_CHEERS.length)]}</h2>
     ${lastSession?.intention ? `<p class="small">Objetivo: «${esc(lastSession.intention)}»</p>`:""}
     <p class="small muted">¿Qué tal la concentración?</p>
@@ -988,7 +1034,7 @@ function vPlanSemana(){
   const days = [...Array(7)].map((_,i) => addDays(start, i));
   const unplanned = S.tasks.filter(t => !t.done && !t.plan).sort(byDue);
   const load = days.map(k => S.tasks.filter(t => t.plan === k && !t.done).reduce((a,t) => a + (t.est||30), 0));
-  return `<section class="card"><div class="card-h"><div class="row"><button class="icon-btn" data-act="week-prev" aria-label="Semana anterior">${ICON.left}</button><h2>Semana del ${shortDate(start)}</h2><button class="icon-btn" data-act="week-next" aria-label="Semana siguiente">${ICON.right}</button></div>${weekOff?`<button class="btn ghost sm" data-act="week-now">Esta semana</button>`:""}</div>
+  return autoPlanCard() + `<section class="card"><div class="card-h"><div class="row"><button class="icon-btn" data-act="week-prev" aria-label="Semana anterior">${ICON.left}</button><h2>Semana del ${shortDate(start)}</h2><button class="icon-btn" data-act="week-next" aria-label="Semana siguiente">${ICON.right}</button></div>${weekOff?`<button class="btn ghost sm" data-act="week-now">Esta semana</button>`:""}</div>
     <p class="small muted">Reparte las tareas en días concretos. Las líneas discontinuas son fechas límite. Intenta no pasar de 3 horas planificadas por día.</p>
     <div class="week">${days.map((k,i) => {
       const d = parseD(k);
@@ -1246,6 +1292,8 @@ function vProgreso(){
     ${S.redeemed.length ? `<p class="small muted">Últimas: ${S.redeemed.slice(-3).reverse().map(r => esc(r.text) + " (" + shortDate(dkey(new Date(r.ts))) + ")").join(" · ")}</p>`:""}
   </section>
 
+  ${gardenCard()}
+  ${evolutionCard()}
   <section class="card"><div class="card-h"><h2>Constancia</h2><div class="legend">menos <i style="background:var(--heat0)"></i><i style="background:var(--heat1)"></i><i style="background:var(--heat2)"></i><i style="background:var(--heat3)"></i><i style="background:var(--heat4)"></i> meta</div></div>
     <div class="heat" role="img" aria-label="Minutos de estudio por día, últimas 18 semanas">${cells}</div>
     <div class="stats"><div class="stat"><div class="n">${streak()}</div><div class="l">racha actual</div></div><div class="stat"><div class="n">${bestStreak()}</div><div class="l">mejor racha</div></div>
@@ -1389,7 +1437,7 @@ function vAsig(){
   <div class="row"><button class="btn primary" data-act="asig-focus">${ICON.play} Estudiar ${esc(s.name)}</button>${dc ? `<button class="btn" data-act="review-subj" data-sid="${s.id}">Repasar ${dc} tarjetas</button>` : ""}${cards.length >= 4 ? `<button class="btn" data-act="quiz" data-sid="${s.id}">Test rápido</button>` : ""}</div></section>
 
   <section class="card"><div class="card-h"><h2>Temario</h2><span class="small muted">${st.mastered} de ${st.n} dominados</span></div>
-    ${ts.length ? `<div class="xpbar"><i style="width:${st.pct}%;background:var(--ok)"></i></div><div class="topics">${ts.map(t => `<div class="topic" data-tid="${t.id}"><span class="n">${esc(t.name)}</span>
+    ${ts.length ? `<div class="xpbar"><i style="width:${st.pct}%;background:var(--ok)"></i></div><div class="topics">${ts.map(t => `<div class="topic" data-tid="${t.id}"><button class="n link" data-act="topic-open" title="Abrir cuaderno del tema">${esc(t.name)}${t.notes ? `<span class="nb">cuaderno</span>` : ""}</button>
       <div class="lv" role="group" aria-label="Nivel de ${esc(t.name)}">${TLV.map(([l,c],i) => `<button data-act="topic-level" data-v="${i}" aria-pressed="${(t.level||0)===i}" style="--c:${c}" title="${l}">${l}</button>`).join("")}</div>
       <div class="acts"><button class="icon-btn" data-act="topic-study" aria-label="Estudiar este tema" title="Estudiar este tema">${ICON.play}</button><button class="icon-btn" data-act="topic-del" aria-label="Borrar tema">${ICON.trash}</button></div></div>`).join("")}</div>`
       : `<p class="empty">Añade los temas de la asignatura (mira la guía docente en Aula Global). Marcar el nivel de cada uno te dice qué repasar antes del examen.</p>`}
@@ -1408,6 +1456,7 @@ function vAsig(){
     <div class="row"><button class="btn sm" data-act="eval-add">Añadir parte</button>${g ? "" : `<button class="btn sm" data-act="eval-tpl" data-v="40">Continua 40% + Final 60%</button><button class="btn sm" data-act="eval-tpl" data-v="50">Continua 50% + Final 50%</button>`}</div>
   </section>
 
+  ${readingsSubjectCard(s.id)}
   <div class="grid2">
     <section class="card"><div class="card-h"><h2>Tareas</h2><button class="btn ghost sm" data-act="asig-addtask">Añadir</button></div>
       ${tasks.length ? `<div class="tasks">${tasks.slice(0,8).map(t => taskRow(t)).join("")}</div>` : `<p class="empty">Nada pendiente.</p>`}</section>
@@ -1581,6 +1630,185 @@ function expedienteCard(){
     <p class="small muted">Las medias son de lo evaluado hasta ahora. Abre cada asignatura para apuntar sus partes y notas.</p></section>`;
 }
 
+/* ================= v5: deshacer, restaurar y copias automáticas ================= */
+const LS_BK = "segunda-mente-backups";
+let undoSnap = null, bkDay = "";
+function toastUndo(msg){
+  const t = $("#toast");
+  t.innerHTML = `<span>${esc(msg)}</span><button class="toast-btn" data-act="undo">Deshacer</button>`; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; undoSnap = null; }, 7000);
+}
+function restoreState(obj){
+  const cur = S, next = migrate(obj), now = Date.now();
+  const del = Object.assign({}, cur.deleted||{}, next.deleted||{});
+  // items brought back win over their tombstones on every synced device
+  ARR_KEYS.forEach(k => (next[k]||[]).forEach(x => { if (x && x.id && del[x.id]){ x._r = now; delete del[x.id]; } }));
+  next.deleted = del; next.onboarded = next.onboarded || cur.onboarded;
+  S = next; known = idSet(cur);
+  save(); render();
+}
+function doUndo(){
+  if (!undoSnap) return;
+  const snap = JSON.parse(undoSnap); undoSnap = null;
+  restoreState(snap); $("#toast").hidden = true; toast("Recuperado");
+}
+function readBackups(){ try { return JSON.parse(localStorage.getItem(LS_BK)) || {}; } catch(e){ return {}; } }
+function dailyBackup(){
+  const k = dkey();
+  if (IN_CLAUDE || loadFailed || !S.onboarded || bkDay === k) return;
+  bkDay = k;
+  const bk = readBackups(); if (bk[k]) return;
+  bk[k] = JSON.stringify(S);
+  const keys = Object.keys(bk).sort(); while (keys.length > 7) delete bk[keys.shift()];
+  try { localStorage.setItem(LS_BK, JSON.stringify(bk)); }
+  catch(e){ try { const only = {[k]:bk[k]}; localStorage.setItem(LS_BK, JSON.stringify(only)); } catch(_){} }
+}
+let bkArm = "";
+function backupsSection(){
+  if (IN_CLAUDE) return "";
+  const bk = readBackups(), keys = Object.keys(bk).sort().reverse();
+  return `<div class="eyebrow">Copias automáticas</div>
+    <p class="small muted">Cada día guardo una copia de tus datos en este navegador (las últimas 7). Si algo se estropea, vuelve a una.</p>
+    ${keys.length ? `<div class="tasks">${keys.map(k => { let n = ""; try { const d = JSON.parse(bk[k]); n = `${d.tasks.length} tareas · ${d.sessions.length} bloques`; } catch(e){}
+      return `<div class="task"><div class="body"><span class="t" style="cursor:default">${cap1(DOW[parseD(k).getDay()])} ${shortDate(k)}</span><span class="sub">${n}</span></div><button class="btn sm${bkArm === k ? " danger" : ""}" data-act="bk-restore" data-k="${k}">${bkArm === k ? "Pulsa otra vez" : "Restaurar"}</button></div>`; }).join("")}</div>` : `<p class="small muted">Aún no hay copias.</p>`}
+    <hr class="hr">`;
+}
+
+/* ================= PLANIFICADOR AUTOMÁTICO ================= */
+let apPreview = null;
+function autoPlan(){
+  const today = dkey(), H = 14, cap = S.settings.dayCap || S.settings.dailyGoal, rest = +S.settings.restDay;
+  const late = new Date().getHours() >= 21;
+  const days = [...Array(H)].map((_,i) => addDays(today, i)).filter(k => !(late && k === today));
+  const load = {}; days.forEach(k => load[k] = S.tasks.filter(t => !t.done && t.plan === k).reduce((a,t) => a + (t.est||45), 0));
+  const todo = S.tasks.filter(t => !t.done && !t.plan && t.type !== "examen").sort((a,b) => byDue(a,b) || (b.est||45) - (a.est||45));
+  const out = [];
+  todo.forEach(t => {
+    const est = t.est || 45;
+    let last = t.due ? addDays(t.due, t.type === "entrega" ? -1 : 0) : days[days.length-1];
+    if (last < days[0]) last = days[0];
+    let cand = days.filter(k => k <= last && (parseD(k).getDay() !== rest || k === last));
+    if (!cand.length) cand = [days[0]];
+    const k = cand.find(d => load[d] + est <= cap) || cand.slice().sort((x,y) => load[x] - load[y])[0];
+    load[k] += est; out.push({id:t.id, day:k});
+  });
+  return {out, load, cap};
+}
+function autoPlanCard(){
+  const unplanned = S.tasks.filter(t => !t.done && !t.plan && t.type !== "examen").length;
+  if (!apPreview) return `<section class="card"><div class="card-h"><h2>Planificar automáticamente</h2><span class="small muted">${unplanned} tarea${unplanned===1?"":"s"} sin día</span></div>
+    <p class="small muted">Reparto tus tareas sin día en los próximos 14 días: lo que vence antes va primero y ningún día pasa de tu capacidad.</p>
+    <div class="row"><label class="f">Capacidad por día (min)<input type="number" id="ap-cap" min="30" step="15" value="${S.settings.dayCap || S.settings.dailyGoal}"></label>
+      <label class="f">Día de descanso<select id="ap-rest"><option value="-1">Ninguno</option>${[1,2,3,4,5,6,0].map(d => `<option value="${d}"${+S.settings.restDay === d ? " selected" : ""}>${cap1(DOW[d])}</option>`).join("")}</select></label></div>
+    <button class="btn primary" data-act="ap-run" style="align-self:flex-start" ${unplanned ? "" : "disabled"}>Proponer un plan</button></section>`;
+  const byDayP = {}; apPreview.out.forEach(p => (byDayP[p.day] = byDayP[p.day] || []).push(p));
+  const keys = Object.keys(byDayP).sort();
+  return `<section class="card"><div class="card-h"><h2>Plan propuesto</h2><span class="small muted">${apPreview.out.length} tareas en ${keys.length} días</span></div>
+    ${keys.map(k => { const over = apPreview.load[k] > apPreview.cap;
+      return `<div class="group-h">${cap1(DOW[parseD(k).getDay()])} ${shortDate(k)} · <span style="${over ? "color:var(--warn)" : ""}">${fmtMin(apPreview.load[k])}${over ? " (por encima de tu capacidad)" : ""}</span></div>
+      <div class="tasks">${byDayP[k].map(p => { const t = S.tasks.find(x => x.id === p.id); return t ? `<div class="task"><span class="dot" style="background:${subjColor(t.subjectId)}"></span><div class="body"><span class="t" style="cursor:default">${esc(t.title)}</span><span class="sub">${t.est || 45} min${t.due ? ` · vence ${whenTxt(t.due)}` : ""}</span></div></div>` : ""; }).join("")}</div>`; }).join("")}
+    ${keys.some(k => apPreview.load[k] > apPreview.cap) ? `<p class="small" style="color:var(--warn)">Algunos días quedan cargados porque las fechas no dan más margen. Si puedes, trocea tareas o empieza antes.</p>` : ""}
+    <div class="row"><button class="btn primary" data-act="ap-apply">Aplicar el plan</button><button class="btn ghost" data-act="ap-cancel">Cancelar</button></div></section>`;
+}
+
+/* ================= JARDÍN DE FOCO ================= */
+const plantKind = m => m >= 70 ? "arbol" : m >= 40 ? "arbusto" : m >= 20 ? "flor" : "brote";
+const PLANT_NAMES = {brote:"un brote", flor:"una flor", arbusto:"un arbusto", arbol:"un árbol"};
+const PLANT_PL = {brote:"brotes", flor:"flores", arbusto:"arbustos", arbol:"árboles"};
+function plantSVG(kind, color, size = 40, grow = 1, gid = ""){
+  let g = "";
+  if (kind === "brote") g = `<path d="M20 37V26" stroke="var(--leaf)" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M20 30c-6 0-8.5-3.5-8.5-7 4.5 0 8.5 2.5 8.5 7z" fill="var(--leaf)"/><path d="M20 28c5.5 0 7.5-3 7.5-6.5-4 0-7.5 2.5-7.5 6.5z" fill="var(--leaf-2)"/>`;
+  else if (kind === "flor"){
+    const pet = [0,72,144,216,288].map(a => { const r = a*Math.PI/180; return `<circle cx="${(20+4.6*Math.cos(r)).toFixed(1)}" cy="${(14+4.6*Math.sin(r)).toFixed(1)}" r="3.7" fill="${color}"/>`; }).join("");
+    g = `<path d="M20 37V17" stroke="var(--leaf)" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M20 30c-5.5 0-7.5-3-7.5-6 4 0 7.5 2 7.5 6z" fill="var(--leaf)"/>${pet}<circle cx="20" cy="14" r="2.7" fill="var(--gold)"/>`;
+  }
+  else if (kind === "arbusto") g = `<circle cx="13.5" cy="29" r="7.5" fill="var(--leaf)"/><circle cx="26.5" cy="29" r="7.5" fill="var(--leaf)"/><circle cx="20" cy="22.5" r="9" fill="var(--leaf-2)"/><circle cx="16" cy="21" r="1.7" fill="${color}"/><circle cx="24" cy="25" r="1.7" fill="${color}"/><circle cx="12" cy="29" r="1.7" fill="${color}"/><circle cx="27" cy="31" r="1.7" fill="${color}"/>`;
+  else g = `<rect x="18" y="23" width="4" height="14" rx="1.5" fill="var(--trunk)"/><circle cx="12.5" cy="20" r="7" fill="var(--leaf)"/><circle cx="27.5" cy="20" r="7" fill="var(--leaf)"/><circle cx="20" cy="13" r="9.5" fill="var(--leaf-2)"/><circle cx="15" cy="12" r="1.8" fill="${color}"/><circle cx="25" cy="16" r="1.8" fill="${color}"/><circle cx="12" cy="21" r="1.8" fill="${color}"/><circle cx="28" cy="22" r="1.8" fill="${color}"/>`;
+  return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true"><g ${gid ? `id="${gid}"` : ""} transform="translate(20 37) scale(${grow.toFixed(3)}) translate(-20 -37)">${g}</g></svg>`;
+}
+let gardenRange = "semana";
+function gardenCard(){
+  const now = Date.now(), m = monday(), mt = parseD(m).getTime();
+  const from = gardenRange === "semana" ? mt : gardenRange === "mes" ? now - 30*864e5 : 0;
+  const ses = S.sessions.filter(s => s.ts >= from);
+  const counts = {brote:0, flor:0, arbusto:0, arbol:0}; ses.forEach(s => counts[plantKind(s.min)]++);
+  const tip = s => `${cap1(DOW[new Date(s.ts).getDay()])} ${shortDate(dkey(new Date(s.ts)))} · ${s.min} min · ${subjName(s.subjectId)}`;
+  const plant = s => `<span class="plant" tabindex="0" data-tip="${esc(tip(s))}">${plantSVG(plantKind(s.min), subjColor(s.subjectId), 40)}</span>`;
+  let body;
+  if (!ses.length) body = `<p class="empty">${gardenRange === "semana" ? "Tu jardín de esta semana está vacío. Cada bloque de foco que termines planta algo aquí." : "Aún no hay plantas en este periodo."}</p>`;
+  else if (gardenRange === "semana") body = `<div class="garden week">${[...Array(7)].map((_,i) => { const k = addDays(m, i), list = ses.filter(s => dkey(new Date(s.ts)) === k);
+      return `<div class="gday${k === dkey() ? " today" : ""}"><div class="gplants">${list.map(plant).join("")}</div><div class="gsoil"></div><b>${DOW_S[parseD(k).getDay()]}</b></div>`; }).join("")}</div>`;
+  else body = `<div class="garden wild">${ses.slice(-240).map(plant).join("")}</div><div class="gsoil"></div>`;
+  return `<section class="card"><div class="card-h"><h2>Tu jardín</h2><div class="seg" role="group" aria-label="Periodo">${[["semana","Semana"],["mes","30 días"],["todo","Todo"]].map(([k,l]) => `<button data-act="garden-range" data-v="${k}" aria-pressed="${gardenRange === k}">${l}</button>`).join("")}</div></div>
+    ${body}
+    <p class="small muted">${Object.entries(counts).filter(([,n]) => n).map(([k,n]) => `${n} ${n === 1 ? PLANT_NAMES[k].replace(/^una? /, "") : PLANT_PL[k]}`).join(" · ") || "Bloques de menos de 20 min plantan un brote; de 20, una flor; de 40, un arbusto; de 70 o más, un árbol."} El color de cada planta es el de su asignatura.</p>
+  </section>`;
+}
+
+/* ================= EVOLUCIÓN (gráficas) ================= */
+function evolutionCard(){
+  const W = 10, m0 = monday();
+  const weeks = [...Array(W)].map((_,i) => { const start = addDays(m0, -(W-1-i)*7), st = parseD(start).getTime(), en = parseD(addDays(start, 7)).getTime();
+    return {start, min:S.sessions.filter(s => s.ts >= st && s.ts < en).reduce((a,s) => a + s.min, 0)}; });
+  const target = S.subjects.reduce((a,s) => a + (s.weekly ?? 4), 0) * 60;
+  const max = Math.max(60, target, ...weeks.map(w => w.min));
+  const H = 120;
+  const last = weeks[W-1], prev = weeks[W-2];
+  const diff = last.min - prev.min;
+  const from = Date.now() - 30*864e5, per = {};
+  S.sessions.filter(s => s.ts >= from).forEach(s => per[s.subjectId||""] = (per[s.subjectId||""]||0) + s.min);
+  const rows = Object.entries(per).sort((a,b) => b[1] - a[1]), pmax = Math.max(1, ...rows.map(r => r[1])), ptot = rows.reduce((a,r) => a + r[1], 0);
+  return `<section class="card"><div class="card-h"><h2>Horas por semana</h2><span class="small muted">últimas ${W} semanas</span></div>
+    <p class="small">Esta semana: <b>${hours(last.min)} h</b>${prev.min || last.min ? ` · ${diff >= 0 ? "+" : "−"}${hours(Math.abs(diff))} h respecto a la anterior` : ""}${target ? ` · objetivo ${hours(target)} h` : ""}</p>
+    <div class="wchart" style="height:${H + 22}px" role="img" aria-label="Horas de foco por semana">
+      ${target ? `<div class="wtarget" style="bottom:${22 + Math.round(target/max*H)}px"><span>objetivo</span></div>` : ""}
+      ${weeks.map((w,i) => `<div class="wcol${i === W-1 ? " now" : ""}" tabindex="0" data-tip="Semana del ${shortDate(w.start)}: ${hours(w.min)} h"><div class="wbar" style="height:${Math.max(2, Math.round(w.min/max*H))}px"></div>${i === W-1 && w.min ? `<em>${hours(w.min)}</em>` : ""}<b>${parseD(w.start).getDate()}/${parseD(w.start).getMonth()+1}</b></div>`).join("")}
+    </div>
+  </section>
+  <section class="card"><div class="card-h"><h2>Reparto por asignatura</h2><span class="small muted">últimos 30 días</span></div>
+    ${rows.length ? `<div class="share">${rows.map(([sid, mm]) => `<div class="srow" tabindex="0" data-tip="${esc(subjName(sid))}: ${hours(mm)} h (${Math.round(mm/ptot*100)}%)"><span class="sn">${esc(subjName(sid))}</span><span class="sb"><i style="width:${Math.max(2, Math.round(mm/pmax*100))}%;background:${subjColor(sid)}"></i></span><span class="sv">${hours(mm)} h</span></div>`).join("")}</div>`
+      : `<p class="empty">Sin bloques en los últimos 30 días.</p>`}
+  </section>`;
+}
+
+/* ================= LECTURAS ================= */
+function readingInfo(r){
+  const left = Math.max(0, (r.pages||0) - (r.read||0));
+  const days = r.due ? Math.max(1, daysBetween(new Date(), parseD(r.due))) : null;
+  return {left, perDay: days ? Math.ceil(left/days) : null, pct: r.pages ? Math.min(100, Math.round((r.read||0)/r.pages*100)) : 0, done: left === 0 && r.pages > 0};
+}
+function readingRow(r, compact){
+  const ri = readingInfo(r);
+  return `<div class="reading" data-rdid="${r.id}"><div class="rt"><span class="dot" style="background:${subjColor(r.subjectId)}"></span><b>${esc(r.title)}</b><span class="small muted">${ri.done ? "Terminada" : `p. ${r.read||0} de ${r.pages}`}${!ri.done && ri.perDay ? ` · <b style="color:var(--ink)">${ri.perDay} págs/día</b> hasta ${whenTxt(r.due)}` : ""}</span></div>
+    <div class="xpbar"><i style="width:${ri.pct}%;background:${ri.done ? "var(--ok)" : "var(--accent)"}"></i></div>
+    ${ri.done ? (compact ? "" : `<div class="row"><button class="btn sm ghost" data-act="rd-del">${ICON.trash} Quitar</button></div>`) : `<div class="row">${ri.perDay ? `<button class="btn sm" data-act="rd-add" data-v="${Math.min(ri.left, ri.perDay)}">+${Math.min(ri.left, ri.perDay)} págs (lo de hoy)</button>` : ""}<button class="btn sm ghost" data-act="rd-add" data-v="10">+10</button>
+      <label class="row small" style="gap:6px">Voy por la <input type="number" min="0" max="${r.pages}" value="${r.read||0}" data-rfield="read" style="width:76px"></label>${compact ? "" : `<button class="icon-btn" data-act="rd-del" aria-label="Borrar lectura">${ICON.trash}</button>`}</div>`}
+  </div>`;
+}
+function readingsToday(){
+  const list = S.readings.filter(r => !readingInfo(r).done).sort((a,b) => (a.due||"9999") < (b.due||"9999") ? -1 : 1).slice(0, 4);
+  if (!list.length) return "";
+  return `<section class="card"><div class="card-h"><h2>Lecturas</h2><span class="small muted">lo que toca hoy para llegar a tiempo</span></div><div class="readings">${list.map(r => readingRow(r, true)).join("")}</div></section>`;
+}
+function readingsSubjectCard(sid){
+  const list = S.readings.filter(r => r.subjectId === sid);
+  return `<section class="card"><h2>Lecturas</h2>
+    ${list.length ? `<div class="readings">${list.map(r => readingRow(r, false)).join("")}</div>` : `<p class="empty small">Apunta las lecturas obligatorias con sus páginas y fecha; te digo cuántas páginas tocan cada día.</p>`}
+    <div class="row"><input type="text" id="rd-title" placeholder="Ej.: Rawls, Teoría de la justicia, cap. 1-3" style="flex:2;min-width:180px"><input type="number" id="rd-pages" min="1" placeholder="Páginas" style="flex:1;min-width:90px"><input type="date" id="rd-due" style="flex:1;min-width:140px" aria-label="Fecha para tenerla leída"></div>
+    <button class="btn sm" data-act="rd-new" style="align-self:flex-start">Añadir lectura</button></section>`;
+}
+
+/* ================= CUADERNO POR TEMA ================= */
+function openTopic(id){
+  const t = S.topics.find(x => x.id === id); if (!t) return;
+  modal(`<div class="card-h"><h2>${esc(t.name)}</h2><button class="btn ghost sm" data-act="modal-close">Cerrar</button></div>
+    <div class="small muted">${esc(subjName(t.subjectId))}</div>
+    <div class="lv" role="group" aria-label="Nivel" data-tid="${t.id}">${TLV.map(([l,c],i) => `<button data-act="topic-level" data-v="${i}" aria-pressed="${(t.level||0)===i}" style="--c:${c}">${l}</button>`).join("")}</div>
+    <label class="f">Explícalo con tus palabras, como si se lo contaras a alguien de primero. Donde te atasques, ahí está lo que tienes que repasar.
+      <textarea id="tp-notes" data-tid="${t.id}" style="min-height:180px" placeholder="Idea principal, conceptos clave, un ejemplo, cómo se relaciona con otros temas…">${esc(t.notes||"")}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="tp-save">Guardar</button><button class="btn" data-act="tp-card">Crear tarjeta</button><button class="btn ghost" data-act="tp-study">${ICON.play} Estudiar este tema</button></div>`, "Cuaderno del tema");
+}
+
 /* ================= SYNC (GitHub Gist, web only) ================= */
 const LS_SYNC = "segunda-mente-sync", GIST_FILE = "segunda-mente.json";
 let sync = {}; try { sync = JSON.parse(localStorage.getItem(LS_SYNC)) || {}; } catch(e){}
@@ -1591,7 +1819,7 @@ async function gh(path, opts={}){
   if (!r.ok) throw {status:r.status};
   return r.json();
 }
-const ARR_KEYS = ["subjects","tasks","notes","sessions","cards","timetable","rewards","control","topics","evals","links","habits"];
+const ARR_KEYS = ["subjects","tasks","notes","sessions","cards","timetable","rewards","control","topics","evals","links","habits","readings"];
 const OBJ_KEYS = ["checkins","journal","reviews","badges","goalDays","habitLog","challenges","reviewLog","topicUps"];
 function mergeStates(a, b){
   const newer = (b.updated||0) > (a.updated||0) ? b : a, older = newer === a ? b : a;
@@ -1601,8 +1829,10 @@ function mergeStates(a, b){
   out.deleted = del;
   ARR_KEYS.forEach(k => {
     const seen = new Set(), res = [];
-    (newer[k]||[]).forEach(x => { if (x && !del[x.id]) { seen.add(x.id); res.push(x); } });
-    (older[k]||[]).forEach(x => { if (x && !seen.has(x.id) && !del[x.id]) { seen.add(x.id); res.push(JSON.parse(JSON.stringify(x))); } });
+    const alive = x => x && (!del[x.id] || (x._r && x._r > del[x.id]));
+    (newer[k]||[]).forEach(x => { if (alive(x)) { seen.add(x.id); res.push(x); } });
+    (older[k]||[]).forEach(x => { if (x && !seen.has(x.id) && alive(x)) { seen.add(x.id); res.push(JSON.parse(JSON.stringify(x))); } });
+    res.forEach(x => { if (del[x.id]) delete del[x.id]; });
     out[k] = k === "sessions" ? res.sort((p,q) => p.ts - q.ts) : res;
   });
   OBJ_KEYS.forEach(k => { out[k] = Object.assign({}, older[k]||{}, newer[k]||{}); });
@@ -1848,6 +2078,7 @@ const INTENTS = [
   ["grades", ["que nota","mis notas","que necesito sacar","cuanto necesito","para aprobar","aprobar","mi media","calificacion","expediente","nota final","que saco"]],
   ["temario", ["temario","temas","cuanto llevo","como llevo","dominio","que tema"]],
   ["habits", ["habito","habitos","rutina"]],
+  ["garden", ["jardin","plantas","arbol","arboles","bosque"]],
   ["challenges", ["reto","retos","desafio"]]
 ];
 function detectIntent(n){
@@ -1980,7 +2211,7 @@ const INTENT_REPLIES = {
   week: () => {
     const start = monday(), end = addDays(start, 6);
     const due = S.tasks.filter(t => !t.done && t.due && t.due >= dkey() && t.due <= addDays(dkey(), 7)).sort(byDue);
-    return {html:`Para organizar la semana: <ul><li>Mira qué vence en los próximos 7 días${due.length ? ": " + due.slice(0,5).map(t => `<b>${esc(clip(t.title,40))}</b> (${whenTxt(t.due)})`).join(", ") : " (nada con fecha)"}.</li><li>En Plan, Semana, reparte cada tarea en un día concreto, como mucho 3 horas planificadas por día.</li><li>Deja un día con menos carga como colchón para imprevistos.</li><li>El domingo, revisión semanal de 10 minutos en Progreso.</li></ul>`, acts:[["Abrir la semana","plan-week",""]]};
+    return {html:`Para organizar la semana: <ul><li>Mira qué vence en los próximos 7 días${due.length ? ": " + due.slice(0,5).map(t => `<b>${esc(clip(t.title,40))}</b> (${whenTxt(t.due)})`).join(", ") : " (nada con fecha)"}.</li><li>En Plan, Semana, reparte cada tarea en un día concreto, como mucho 3 horas planificadas por día.</li><li>Deja un día con menos carga como colchón para imprevistos.</li><li>El domingo, revisión semanal de 10 minutos en Progreso.</li></ul>`, acts:[["Planificar automáticamente","auto-plan",""],["Abrir la semana","plan-week",""]]};
   },
   exam: (x) => {
     if (!x.ex) return {html:`No tienes exámenes pendientes apuntados.${S.tasks.some(t => t.type === "examen" && t.done && t.due && t.due >= dkey()) ? " Ojo: tienes un examen futuro marcado como hecho. Si fue sin querer, desmárcalo en Plan, Lista, Ver hechas." : ""} Apúntalo así: <i>añade examen de Matemáticas el jueves</i>, y te creo un plan de repaso espaciado.`, acts:[["Ver hechas en Plan","go","plan"]]};
@@ -2007,7 +2238,7 @@ const INTENT_REPLIES = {
   essay: () => ({html:`Estructura de un ensayo o trabajo:<ul><li>Introducción: contexto, pregunta y tesis en una frase.</li><li>Desarrollo: un argumento por párrafo, con evidencia o autor.</li><li>Objeción principal y tu respuesta: sube mucho la nota.</li><li>Conclusión: responde a la pregunta, sin ideas nuevas.</li></ul>Escribe un primer borrador rápido y feo; corregir es más fácil que empezar. Cita siempre (APA o el estilo que pida el profesor).`, acts:[["Añadir tarea de ensayo","say","añade entrega del ensayo"]]}),
   oral: () => ({html:`Para una exposición: una idea por diapositiva, poco texto, y ensaya en voz alta 2 o 3 veces cronometrando. Empieza con una pregunta o un dato que enganche y termina con la idea que quieres que recuerden. Los nervios bajan muchísimo con el ensayo.`}),
   group: () => ({html:`Trabajos en grupo sin dramas: el primer día repartid tareas con nombre y fecha, poned una fecha interna 2 días antes de la entrega real y usad un documento compartido. Si alguien no aporta, habladlo pronto y con hechos concretos.`}),
-  reading: () => ({html:`Para lecturas largas: primero un vistazo (índice, introducción, conclusiones), luego lee con una pregunta en mente. Al acabar cada sección, cierra el texto y escribe 3 líneas de lo que dice. Divide la lectura en bloques de 25 minutos y apúntala como tarea de tipo Lectura.`, acts:[["Empezar a leer (25 min)","focus","|25"]]}),
+  reading: () => ({html:`${S.readings.filter(r => !readingInfo(r).done).length ? "Tus lecturas:<ul>" + S.readings.filter(r => !readingInfo(r).done).map(r => { const ri = readingInfo(r); return `<li><b>${esc(r.title)}</b>: p. ${r.read||0} de ${r.pages}${ri.perDay ? `, ${ri.perDay} págs/día hasta ${whenTxt(r.due)}` : ""}</li>`; }).join("") + "</ul>" : ""}Para lecturas largas: primero un vistazo (índice, introducción, conclusiones), luego lee con una pregunta en mente. Al acabar cada sección, cierra el texto y escribe 3 líneas de lo que dice. Divide la lectura en bloques de 25 minutos y apúntala como tarea de tipo Lectura.`, acts:[["Empezar a leer (25 min)","focus","|25"]]}),
   time: () => { const tot = S.subjects.reduce((a,s) => a + (s.weekly??4), 0); return {html:`Un crédito ECTS son 25–30 horas de trabajo total. Con ${S.subjects.length || 5} asignaturas de 6 ECTS, calcula unas ${tot || 20} horas de estudio propio a la semana además de las clases. Tu meta diaria está en ${fmtMin(S.settings.dailyGoal)}; constancia antes que maratones: 2 horas diarias ganan a 10 horas el domingo.`, acts:[["Ajustar meta","settings",""]]}; },
   breaks: () => ({html:`Las pausas son parte del estudio: el cerebro consolida mientras descansas. En la pausa, levántate, camina, bebe agua o mira por la ventana. Evita las redes: no descansan la atención. Cada 4 bloques, pausa larga de 15–30 minutos.`}),
   health: () => ({html:`Lo básico rinde más que cualquier truco: dormir 7–9 horas, moverte a diario (30 minutos de paseo mejoran la memoria), comer de verdad y beber agua. El café ayuda, pero no después de las 16:00 si quieres dormir bien.`}),
@@ -2029,6 +2260,8 @@ const INTENT_REPLIES = {
     const worst = rows.slice().sort((a,b) => a.st.pct - b.st.pct)[0], wt = worst.st.weak[0];
     return {html:`Temario dominado:<ul>${rows.map(({s,st}) => `<li><b>${esc(s.name)}</b>: ${st.pct}%${st.weak.length ? ` · flojos: ${st.weak.slice(0,3).map(t => esc(t.name)).join(", ")}` : " · todo estudiado"}</li>`).join("")}</ul>${wt ? `Te propongo empezar por <b>${esc(wt.name)}</b> (${esc(worst.s.name)}).` : ""}`, acts: wt ? [["Estudiar " + clip(wt.name, 22), "focus", "|" + S.settings.focus + "|" + worst.s.id + "|Tema: " + wt.name]] : []};
   },
+  garden: () => { const c = {brote:0, flor:0, arbusto:0, arbol:0}; S.sessions.forEach(s => c[plantKind(s.min)]++); const tot = S.sessions.length;
+    return {html: tot ? `Tu jardín tiene <b>${tot}</b> plantas: ${Object.entries(c).filter(([,n]) => n).map(([k,n]) => n + " " + (n === 1 ? PLANT_NAMES[k].replace(/^una? /, "") : PLANT_PL[k])).join(", ")}. Los bloques de 70 minutos o más plantan árboles.` : `Tu jardín está vacío. Cada bloque de foco planta algo: un brote, una flor, un arbusto o, con 70 minutos o más, un árbol.`, acts:[["Ver mi jardín","go","progreso"],["Plantar un árbol (70 min)","focus","|70"]]}; },
   habits: () => {
     if (!S.habits.length) return {html:`No tienes hábitos configurados. En Hoy, Hábitos, pulsa Editar para añadirlos.`, acts:[["Ir a Hoy","go","hoy"]]};
     return {html:`Tus hábitos hoy:<ul>${S.habits.map(h => `<li>${habitDone(h.id) ? "Hecho" : "Pendiente"}: ${esc(h.name)}${habitStreak(h.id) ? ` (${habitStreak(h.id)} día${habitStreak(h.id)>1?"s":""} seguido${habitStreak(h.id)>1?"s":""})` : ""}</li>`).join("")}</ul>Dormir, moverte y desconectar del móvil mejoran la memoria y la concentración tanto como estudiar más.`, acts:[["Ir a Hoy","go","hoy"]]};
@@ -2061,6 +2294,7 @@ function coachDo(kind, arg){
   if (kind === "go") return go(arg);
   if (kind === "settings") return openSettings();
   if (kind === "plan-subjects"){ planTab = "asignaturas"; return go("plan"); }
+  if (kind === "auto-plan"){ planTab = "semana"; weekOff = 0; apPreview = autoPlan(); return go("plan"); }
   if (kind === "plan-week"){ planTab = "semana"; return go("plan"); }
   if (kind === "breath"){ breathStop(); br.on = true; go("calma"); setTimeout(() => breathStep(0), 80); br.end = setTimeout(() => { if (br.on){ breathStop(); if (view === "calma") render(); toast("Un minuto hecho. ¿Siguiente paso?"); } }, 64000); return; }
   if (kind === "dump"){ noteKind = "descarga"; go("mente"); setTimeout(() => $("#note-text")?.focus(), 50); return; }
@@ -2120,8 +2354,10 @@ function openSettings(){
     <div class="row"><label class="f">Tema<select id="s-theme"><option value="auto"${st.theme==="auto"?" selected":""}>Automático</option><option value="light"${st.theme==="light"?" selected":""}>Claro</option><option value="dark"${st.theme==="dark"?" selected":""}>Oscuro</option></select></label></div>
     ${!IN_CLAUDE && "Notification" in window ? `<label class="chk"><input type="checkbox" id="s-notify" ${st.notify?"checked":""}> Avisarme cuando acabe un bloque aunque esté en otra pestaña</label>`:""}
     <button class="btn primary" data-act="s-save" style="align-self:flex-start">Guardar ajustes</button>
+    ${!IN_CLAUDE ? `<label class="chk"><input type="checkbox" id="s-exits" ${S.settings.trackExits ? "checked" : ""}> Contar como distracción salir de la pestaña más de 15 s durante un bloque</label>` : ""}
     <hr class="hr">
     ${syncSection()}
+    ${backupsSection()}
     <div class="eyebrow">Tus datos</div>
     <p class="small muted"><span data-sync class="sync"></span><br>Ocupan ${size} KB. Para pasarlos entre la versión de Claude y la web (u otro navegador), descarga o copia una copia aquí y restáurala allí.</p>
     <div class="row"><button class="btn sm" data-act="s-download">Descargar copia (.json)</button><button class="btn sm" data-act="s-export">Copiar como texto</button></div>
@@ -2132,7 +2368,7 @@ function openSettings(){
   paintSync();
 }
 function restore(text){
-  try { const d = JSON.parse(text); if (!d || !Array.isArray(d.tasks)) throw 0; S = migrate(d); S.onboarded = true; save(); closeModal(); render(); toast("Copia restaurada: " + S.tasks.length + " tareas, " + S.notes.length + " notas, " + S.sessions.length + " bloques."); }
+  try { const d = JSON.parse(text); if (!d || !Array.isArray(d.tasks)) throw 0; d.onboarded = true; closeModal(); restoreState(d); toast("Copia restaurada: " + S.tasks.length + " tareas, " + S.notes.length + " notas, " + S.sessions.length + " bloques."); }
   catch(err){ toast("Ese archivo o texto no es una copia válida de Segunda Mente."); }
 }
 
@@ -2162,6 +2398,13 @@ document.addEventListener("click", e => {
   const act = a.dataset.act;
   const row = a.closest("[data-id]"), tid = a.dataset.id || row?.dataset.id;
   const task = tid ? S.tasks.find(t => t.id === tid) : null;
+  const DEL = {"del-task":"Tarea borrada","et-del":"Tarea borrada","subj-del":"Asignatura borrada","tt-del":"Clase borrada","card-del":"Tarjeta borrada","note-del":"Nota borrada","reward-del":"Recompensa borrada","topic-del":"Tema borrado","eval-del":"Parte borrada","link-del":"Enlace borrado","habit-del":"Hábito borrado","rd-del":"Lectura borrada","ctl-drop":"Soltado"};
+  const snapBefore = DEL[act] ? JSON.stringify(S) : null;
+  try { handleAct(act, a, e, task); } finally {
+    if (snapBefore && JSON.stringify(S) !== snapBefore){ undoSnap = snapBefore; toastUndo(DEL[act]); }
+  }
+});
+function handleAct(act, a, e, task){
   switch(act){
     case "ob-pick": { const n = a.dataset.name; obPicked = obPicked.includes(n) ? obPicked.filter(x => x !== n) : [...obPicked, n]; S.name = $("#ob-name").value.trim(); S.settings.why = $("#ob-why").value.trim(); render(); break; }
     case "ob-add": { const v = $("#ob-custom").value.trim(); if (v && !obPicked.includes(v)) obPicked.push(v); S.name = $("#ob-name").value.trim(); S.settings.why = $("#ob-why").value.trim(); render(); setTimeout(() => $("#ob-custom")?.focus()); break; }
@@ -2306,7 +2549,19 @@ document.addEventListener("click", e => {
     case "go-dump": noteKind = "descarga"; go("mente"); setTimeout(() => $("#note-text")?.focus(), 50); break;
     case "ten-min": breathStop(); startFocusOn(smallest() || null, 10); break;
     case "five-min": breathStop(); startFocusOn(smallest() || null, 5); toast("Solo 5 minutos. Si luego quieres seguir, genial."); break;
-    case "search": openSearch(); break;
+    case "undo": doUndo(); break;
+    case "bk-restore": { const k = a.dataset.k; if (bkArm !== k){ bkArm = k; openSettings(); break; } bkArm = ""; const bk = readBackups(); if (bk[k]){ closeModal(); restoreState(JSON.parse(bk[k])); toast("Restaurada la copia del " + shortDate(k)); } break; }
+    case "ap-run": { S.settings.dayCap = Math.max(30, parseInt($("#ap-cap").value) || S.settings.dailyGoal); S.settings.restDay = +$("#ap-rest").value; save(); apPreview = autoPlan(); render(); break; }
+    case "ap-apply": { if (!apPreview) break; let n = 0; apPreview.out.forEach(p => { const t = S.tasks.find(x => x.id === p.id); if (t && !t.done && !t.plan){ t.plan = p.day; n++; } }); apPreview = null; save(); render(); toast("Plan aplicado: " + n + " tareas repartidas. Las verás en Hoy cada día."); break; }
+    case "ap-cancel": apPreview = null; render(); break;
+    case "garden-range": gardenRange = a.dataset.v; render(); break;
+    case "rd-new": { const title = $("#rd-title").value.trim(), pages = parseInt($("#rd-pages").value) || 0; if (!title || !pages){ toast("Pon el título y el número de páginas."); break; } S.readings.push({id:uid(), subjectId:curSubj, title:title.slice(0,140), pages, read:0, due:$("#rd-due").value, created:Date.now()}); save(); render(); toast("Lectura añadida"); break; }
+    case "rd-add": { const r = S.readings.find(x => x.id === a.closest("[data-rdid]").dataset.rdid); if (r){ const before = r.read||0; r.read = Math.min(r.pages, before + (+a.dataset.v||0)); gainXP(Math.floor((r.read - before)/3), true); save(); render(); toast(readingInfo(r).done ? "Lectura terminada. Muy bien." : "Ahora vas por la página " + r.read); } break; }
+    case "rd-del": { const id = a.closest("[data-rdid]").dataset.rdid; S.readings = S.readings.filter(x => x.id !== id); save(); render(); break; }
+    case "topic-open": openTopic(a.closest("[data-tid]").dataset.tid); break;
+    case "tp-save": { const ta = $("#tp-notes"), t = S.topics.find(x => x.id === ta.dataset.tid); if (t){ t.notes = ta.value; save(); render(); toast("Cuaderno guardado"); } break; }
+    case "tp-card": { const ta = $("#tp-notes"), t = S.topics.find(x => x.id === ta.dataset.tid); if (!t) break; if (!ta.value.trim()){ toast("Escribe primero tu explicación."); break; } t.notes = ta.value; S.cards.push({id:uid(), subjectId:t.subjectId, q:"Explica: " + t.name, a:ta.value.trim().slice(0, 600), due:dkey(), created:Date.now()}); save(); render(); toast("Tarjeta creada en Repasar"); break; }
+    case "tp-study": { const ta = $("#tp-notes"), t = S.topics.find(x => x.id === ta.dataset.tid); if (!t) break; t.notes = ta.value; save(); closeModal(); T.subjectId = t.subjectId; T.taskId = ""; T.intention = "Tema: " + t.name; startFocusOn(null); break; }
     case "gs-open": {
       const k = a.dataset.k, id = a.dataset.id, q = $("#gs-q")?.value || "";
       closeModal();
@@ -2322,7 +2577,7 @@ document.addEventListener("click", e => {
     case "asig-focus": T.subjectId = curSubj; T.taskId = ""; T.intention = ""; startFocusOn(null); break;
     case "asig-addtask": planFilter = curSubj; planTab = "lista"; go("plan"); setTimeout(() => $("#nt-title")?.focus(), 50); break;
     case "topic-add": { const lines = $("#tp-new").value.split("\n").map(x => x.trim()).filter(Boolean); lines.forEach(name => S.topics.push({id:uid(), subjectId:curSubj, name:name.slice(0,160), level:0})); if (lines.length){ save(); render(); toast("Añadidos " + lines.length + " temas"); } break; }
-    case "topic-level": { const tp = S.topics.find(x => x.id === a.closest("[data-tid]").dataset.tid); const v = +a.dataset.v; if (tp){ if (v > (tp.level||0)){ S.topicUps[dkey()] = (S.topicUps[dkey()]||0) + 1; gainXP(5, true); if (v === 3) toast("Tema dominado. +5 XP"); } tp.level = v; tp.last = Date.now(); save(); render(); } break; }
+    case "topic-level": { const tp = S.topics.find(x => x.id === a.closest("[data-tid]").dataset.tid); const v = +a.dataset.v; if (tp){ if (v > (tp.level||0)){ S.topicUps[dkey()] = (S.topicUps[dkey()]||0) + 1; gainXP(5, true); if (v === 3) toast("Tema dominado. +5 XP"); } tp.level = v; tp.last = Date.now(); save(); render(); a.parentElement.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === a))); } break; }
     case "topic-del": { const id = a.closest("[data-tid]").dataset.tid; S.topics = S.topics.filter(x => x.id !== id); save(); render(); break; }
     case "topic-study": { const tp = S.topics.find(x => x.id === a.closest("[data-tid]").dataset.tid); if (tp){ T.subjectId = tp.subjectId; T.taskId = ""; T.intention = "Tema: " + tp.name; startFocusOn(null); } break; }
     case "eval-add": S.evals.push({id:uid(), subjectId:curSubj, name:"Nueva parte", weight:0, grade:"", min:""}); save(); render(); break;
@@ -2358,7 +2613,7 @@ document.addEventListener("click", e => {
     case "ctl-task": { const c = S.control.find(x => x.id === a.dataset.id); addTask({title:c.text}); S.control = S.control.filter(x => x !== c); save(); render(); toast("Convertido en tarea en Plan"); break; }
     case "ctl-drop": S.control = S.control.filter(x => x.id !== a.dataset.id); save(); render(); toast("Soltado. No era tuyo de cargar."); break;
   }
-});
+}
 document.addEventListener("change", e => {
   const t = e.target;
   if (t.id === "t-subj"){ T.subjectId = t.value; const task = S.tasks.find(x => x.id === T.taskId); if (task && task.subjectId !== t.value) T.taskId = ""; saveTimer(); render(); }
@@ -2368,6 +2623,8 @@ document.addEventListener("change", e => {
   else if (t.id === "s-file"){ const f = t.files && t.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => restore(String(r.result)); r.readAsText(f); }
   else if (t.dataset.actChange === "plan-day"){ const task = S.tasks.find(x => x.id === t.closest("[data-id]").dataset.id); if (task && t.value){ task.plan = t.value; save(); render(); } }
   else if (t.dataset.efield && t.closest("[data-eid]")){ const ev = S.evals.find(x => x.id === t.closest("[data-eid]").dataset.eid); if (ev){ const f = t.dataset.efield; ev[f] = f === "name" ? (t.value.trim() || ev.name) : f === "weight" ? Math.max(0, Math.min(100, parseFloat(String(t.value).replace(",", ".")) || 0)) : parseG(t.value); save(); render(); } }
+  else if (t.dataset.rfield === "read" && t.closest("[data-rdid]")){ const r = S.readings.find(x => x.id === t.closest("[data-rdid]").dataset.rdid); if (r){ const before = r.read||0; r.read = Math.max(0, Math.min(r.pages, parseInt(t.value) || 0)); if (r.read > before) gainXP(Math.floor((r.read - before)/3), true); save(); render(); } }
+  else if (t.id === "s-exits"){ S.settings.trackExits = t.checked; save(); }
   else if (t.id === "as-target"){ const s = subj(curSubj), v = parseG(t.value); if (s && v !== ""){ s.target = v; save(); render(); } }
   else if (t.dataset.field && t.closest("[data-sid]")){ const s = subj(t.closest("[data-sid]").dataset.sid); if (t.dataset.field === "name" && t.value.trim()) s.name = t.value.trim(); if (t.dataset.field === "ects") s.ects = parseInt(t.value)||0; if (t.dataset.field === "weekly") s.weekly = parseFloat(t.value)||0; save(); }
 });
@@ -2395,13 +2652,24 @@ document.addEventListener("keydown", e => {
   }
   if (e.key !== "Enter") return;
   if ((id === "note-text" || id === "cap-text") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $(id === "note-text" ? '[data-act="add-note"]' : '[data-act="cap-save"]').click(); return; }
-  const map = {"nt-title":"add-task", "park":"park", "chat-in":"chat-send", "new-subj":"subj-add", "ob-custom":"ob-add", "ctl-in":null, "rw-text":"reward-add", "et-title":"et-save", "cap-text":"cap-save", "coach-in":"coach-send", "hb-new":"habit-add", "cal-new":"cal-add", "ln-url":"link-add", "sync-token":"sync-connect"};
+  const map = {"nt-title":"add-task", "park":"park", "chat-in":"chat-send", "new-subj":"subj-add", "ob-custom":"ob-add", "ctl-in":null, "rw-text":"reward-add", "et-title":"et-save", "cap-text":"cap-save", "coach-in":"coach-send", "hb-new":"habit-add", "cal-new":"cal-add", "ln-url":"link-add", "rd-title":"rd-new", "sync-token":"sync-connect"};
   if (id in map && map[id] && e.target.tagName === "INPUT") { e.preventDefault(); $(`[data-act="${map[id]}"]`)?.click(); }
   if (id === "t-int"){ e.preventDefault(); T.intention = e.target.value.trim(); saveTimer(); if (!T.running) $('[data-act="t-toggle"]').click(); }
 });
-document.addEventListener("visibilitychange", () => { if (!document.hidden && T.running) { keepAwake(true); if (timeLeft() <= 0) finishBlock(true); } });
+document.addEventListener("visibilitychange", () => {
+  if (T.running && T.mode === "focus" && S.settings.trackExits){
+    if (document.hidden){ T.awayAt = Date.now(); saveTimer(); }
+    else if (T.awayAt){
+      const secs = Math.round((Date.now() - T.awayAt)/1000); T.awayAt = 0;
+      if (secs >= 15 && timeLeft() > 0){ T.distractions++; T.exits = (T.exits||0) + 1; saveTimer(); if (view === "foco") render(); toast(`Has salido ${secs >= 60 ? Math.round(secs/60) + " min" : secs + " s"} de la pestaña. Lo cuento como distracción: vuelve a lo tuyo.`); }
+      else saveTimer();
+    }
+  }
+  if (!document.hidden && T.running) { keepAwake(true); if (timeLeft() <= 0) finishBlock(true); }
+});
 
 if (!IN_CLAUDE && "serviceWorker" in navigator && location.protocol === "https:") { try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch(e){} }
+dailyBackup();
 render();
 connect();
 syncInit();

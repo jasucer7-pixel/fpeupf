@@ -8,5 +8,29 @@
   "display": "standalone",
   "background_color": "#f4f5f8",
   "theme_color": "#2d55c8",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Empezar a estudiar",
+      "short_name": "Foco",
+      "url": "./#foco"
+    },
+    {
+      "name": "Hablar con el coach",
+      "short_name": "Coach",
+      "url": "./#coach"
+    },
+    {
+      "name": "Plan de la semana",
+      "short_name": "Plan",
+      "url": "./#plan"
+    }
+  ]
 }
