@@ -16,6 +16,10 @@ Web para organizar el estudio del grado en Filosofía, Política y Economía (UP
 - **Jardín de foco**: cada bloque planta un brote, una flor, un arbusto o un árbol según su duración, del color de la asignatura. Detecta si sales de la pestaña durante un bloque.
 - **Lecturas** con páginas leídas y páginas por día necesarias; **cuaderno por tema** para explicarlo con tus palabras (técnica Feynman) y convertirlo en tarjeta.
 - **Gráficas** de horas por semana y reparto por asignatura; **deshacer** al borrar y **copias automáticas** diarias (últimas 7).
+- **Hoy personalizable**: elige qué tarjetas ves y en qué orden, o activa el **modo mínimo** (solo tu meta y lo de hoy).
+- **Sesión de estudio en cola**: prepara varios bloques seguidos y Foco carga el siguiente al terminar cada uno. **Subtareas** (pasos) dentro de cada tarea.
+- **Comodín de racha** (50 monedas): protege tu racha si un día no puedes estudiar. **Celebraciones** al subir de nivel, desbloquear logros, cobrar retos o terminar lo de hoy.
+- **Guía rápida** (tecla ?) con la rutina recomendada y los atajos; el coach te da un **resumen de la semana pasada** los lunes.
 - **Coach**: entrenador sin IA que conoce tus tareas, exámenes y horas. Entiende órdenes («añade examen de Matemáticas el jueves», «apunta una duda: …», «empieza un bloque de 50 min»), te dice qué hacer ahora, te hace un plan para hoy, te anima cuando estás agobiado o sin ganas, te da técnicas de estudio por asignatura y explica unos 90 conceptos clave de FPE.
 - **Repasar**: tarjetas con repetición espaciada (estilo Anki), por asignatura, alta masiva con `pregunta :: respuesta`.
 - **Mente**: notas rápidas (apuntes, ideas, dudas, descarga mental), búsqueda, convertir en tarea o tarjeta. Captura rápida desde cualquier pantalla con el botón + o la tecla N.
