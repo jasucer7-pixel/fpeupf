@@ -395,6 +395,15 @@ button.sbar:hover{background:var(--surface-2)}
 .keys{display:flex;flex-direction:column;gap:8px}
 .keys div{display:flex;gap:10px;align-items:center;font-size:.88rem}
 kbd{font-family:var(--f-mono);font-size:.78rem;background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.sync-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.sync-chip i{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block}
+.sync-chip.on i{background:var(--ok)}
+.sync-chip:hover{border-color:var(--accent);color:var(--ink)}
+.sync-banner{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--warn-soft);border-color:var(--warn)}
+.sync-banner > div:first-child{flex:1;min-width:220px}
+.qr{display:grid;place-items:center;background:#ffffff;border-radius:12px;padding:10px;width:min(240px,100%);aspect-ratio:1;margin:0 auto;max-width:100%}
+.qr svg{width:100%;height:100%;display:block}
+.callout{display:flex;flex-direction:column;gap:4px;background:var(--accent-soft);border-radius:12px;padding:12px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -692,6 +701,7 @@ function renderRail(){
     <button class="tab mob" data-act="more" ${!MOBILE.includes(view)?'aria-current="page"':''}>${ICON.more}Más${dc?`<span class="badge">${dc}</span>`:""}</button>
     <div class="rail-foot">
       <div class="rail-lvl"><div class="row" style="justify-content:space-between"><b>Nivel ${lv.n}</b><span class="coin">${coins()}</span></div><div class="muted" style="margin:2px 0 6px">${lv.title}</div><div class="xpbar"><i style="width:${Math.round(lv.into/lv.need*100)}%"></i></div></div>
+      ${IN_CLAUDE ? "" : `<div style="padding:0 4px 6px">${syncChip()}</div>`}
       <button class="tab" data-act="search">${ICON.search}Buscar</button>
       <button class="tab" data-go="guia">${ICON.help}Guía</button>
       <button class="tab" data-act="capture">${ICON.plus}Captura rápida</button>
@@ -759,7 +769,7 @@ function vOnboard(){
     <div class="row"><label class="f">Inicio del trimestre<input type="date" id="ob-term" value="${esc(S.settings.termStart)}"></label>
     <label class="f">Meta diaria de estudio (min)<input type="number" id="ob-goal" min="15" step="15" value="${S.settings.dailyGoal}"></label></div>
   </div>
-  <div class="row"><button class="btn primary" data-act="ob-done">Empezar ${ICON.arrow}</button><button class="btn ghost" data-act="settings">Tengo una copia de seguridad</button><span data-sync class="sync"></span></div>`;
+  <div class="row"><button class="btn primary" data-act="ob-done">Empezar ${ICON.arrow}</button>${IN_CLAUDE ? "" : `<button class="btn ghost" data-act="sync-wizard">Ya lo uso en otro dispositivo</button>`}<button class="btn ghost" data-act="settings">Tengo una copia de seguridad</button><span data-sync class="sync"></span></div>`;
 }
 
 /* ================= HOY ================= */
@@ -788,14 +798,14 @@ function vHoy(){
   const left = Math.max(0, goal - mToday);
   const goalMsg = mToday >= goal ? "Meta cumplida. Todo lo que sumes ahora es extra." : mToday === 0 ? `Un primer bloque de ${S.settings.focus} min y ya estás en marcha.` : `Te faltan ${left} min: ${Math.ceil(left/S.settings.focus)} bloque${Math.ceil(left/S.settings.focus)>1?"s":""} de ${S.settings.focus}.`;
   const B = {
-    hero: `<section class="card hero"><div class="goal">${goalRing(mToday, goal)}
+    hero: `${syncBanner()}<section class="card hero"><div class="goal">${goalRing(mToday, goal)}
     <div class="info">
       ${S.settings.why ? `<div class="why">«${esc(S.settings.why)}»</div>` : `<button class="btn ghost sm" data-act="settings" style="align-self:flex-start">Escribe tu porqué: te ayudará los días difíciles</button>`}
       <p class="small">${goalMsg}</p>
       <div class="row small"><b>${st} día${st===1?"":"s"} de racha</b><span class="muted">·</span><span>Nivel ${lv.n}, ${esc(lv.title)}</span><span class="coin" title="Monedas para canjear por recompensas">${coins()}</span></div>
       <div class="xpbar" title="${lv.into} de ${lv.need} XP"><i style="width:${Math.round(lv.into/lv.need*100)}%"></i></div>
     </div></div>
-    <div class="row"><button class="btn primary" data-act="${open[0] ? "focus-task" : "quick-focus"}" ${open[0]?`data-id="${open[0].id}"`:""}>${ICON.play} ${open[0] ? "Empezar con «" + esc(clip(open[0].title, 30)) + "»" : "Empezar un bloque de " + S.settings.focus + " min"}</button></div>
+    <div class="row"><button class="btn primary" data-act="${open[0] ? "focus-task" : "quick-focus"}" ${open[0]?`data-id="${open[0].id}"`:""}>${ICON.play} ${open[0] ? "Empezar con «" + esc(clip(open[0].title, 30)) + "»" : "Empezar un bloque de " + S.settings.focus + " min"}</button>${syncChip()}</div>
   </section>`,
     coach: `<section class="card quiet coach-tip">${ICON.coach.replace("<svg",'<svg style="width:22px;height:22px;color:var(--accent);flex:none"')}<p class="small"><b>Tu coach:</b> ${coachBrief()}</p><button class="btn sm" data-go="coach">Hablar con el coach</button></section>`,
     energy: `<section class="card"><div class="card-h"><h2>¿Cómo llegas hoy?</h2>${ck?`<span class="muted small">Puedes cambiarlo</span>`:""}</div>
@@ -2015,6 +2025,7 @@ async function gistSync(){
     syncErr = e && e.status === 401 ? "El token ya no es válido. Crea otro y vuelve a conectar." : e && e.status === 404 ? "No encuentro el gist de sincronización. Vuelve a conectar." : "Sin conexión: se sincronizará cuando vuelva internet.";
   }
   syncBusy = false; paintSync();
+  document.querySelectorAll(".sync-chip").forEach(c => { c.className = "sync-chip" + (sync.gistId && !syncErr ? " on" : ""); c.innerHTML = "<i></i>" + syncStatusText(); });
   if (syncAgain){ syncAgain = false; setTimeout(gistSync, 500); }
 }
 async function gistConnect(token){
@@ -2028,12 +2039,13 @@ async function gistConnect(token){
       sync.gistId = g.id;
     }
     saveSyncCfg(); await gistSync(); syncInit();
-    toast(found ? "Conectado. He unido tus datos con los de tus otros dispositivos." : "Sincronización activada. Conecta tus otros dispositivos con el mismo token.");
+    toast(found ? "Vinculado. Tus datos ya son los mismos que en tus otros dispositivos." : "Sincronización activada. Ahora escanea el QR con el móvil.");
+    if (!found){ render(); openSyncWizard(); return; }
   } catch(e){
     sync = {}; saveSyncCfg();
     toast(e && e.status === 401 ? "Token no válido. Revisa que lo has copiado entero." : e && e.status === 403 ? "Al token le falta el permiso «gist»." : "No he podido conectar con GitHub. Prueba de nuevo.");
   }
-  if ($("#modal-root").innerHTML) openSettings();
+  if ($("#modal-root").innerHTML) openSyncWizard();
   render();
 }
 function scheduleGist(){ if (sync.gistId){ clearTimeout(syncT); syncT = setTimeout(gistSync, 2500); } }
@@ -2042,11 +2054,74 @@ function syncInit(){
   if (IN_CLAUDE || !sync.gistId || syncLoop) return;
   syncLoop = true;
   gistSync();
-  setInterval(() => { if (!document.hidden) gistSync(); }, 90000);
+  setInterval(() => { if (!document.hidden) gistSync(); }, 60000);
+  window.addEventListener("focus", () => gistSync());
   document.addEventListener("visibilitychange", () => { if (!document.hidden) gistSync(); });
   window.addEventListener("online", gistSync);
 }
+const LINK_KEY = "vincular=";
+const syncLink = () => location.origin + location.pathname + "#" + LINK_KEY + encodeURIComponent(sync.token || "");
+function loadQR(){
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  const tryLoad = src => new Promise((ok, ko) => { const sc = document.createElement("script"); sc.src = src; sc.onload = () => window.qrcode ? ok(window.qrcode) : ko(); sc.onerror = ko; document.head.appendChild(sc); });
+  return tryLoad("vendor/qrcode-generator.js").catch(() => tryLoad("https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"));
+}
+function syncStatusText(){
+  if (IN_CLAUDE) return syncMode === "cloud" ? "Guardado en tu cuenta de Claude" : "Guardado en este navegador";
+  if (!sync.gistId) return "Solo en este dispositivo";
+  if (syncErr) return "Sincronización pendiente";
+  return sync.last ? "Sincronizado " + ago(sync.last) : "Sincronizado";
+}
+const syncChip = () => IN_CLAUDE ? "" : `<button class="sync-chip${sync.gistId && !syncErr ? " on" : ""}" data-act="sync-wizard" title="Sincronizar móvil y ordenador"><i></i>${syncStatusText()}</button>`;
+function syncBanner(){
+  let dismissed = false; try { dismissed = localStorage.getItem("segunda-mente-syncbanner") === "no"; } catch(e){}
+  if (IN_CLAUDE || sync.gistId || dismissed) return "";
+  return `<section class="card sync-banner"><div><b>Tu progreso solo está en este dispositivo.</b><p class="small muted">Sincroniza el móvil y el ordenador para tener los mismos datos en los dos. Se configura una vez y tardas 2 minutos.</p></div>
+    <div class="row"><button class="btn sm primary" data-act="sync-wizard">Sincronizar</button><button class="btn sm ghost" data-act="sync-banner-off">Ahora no</button></div></section>`;
+}
+function openSyncWizard(){
+  if (IN_CLAUDE){ openSettings(); return; }
+  if (sync.gistId){
+    modal(`<div class="card-h"><h2>Móvil y ordenador sincronizados</h2><button class="btn ghost sm" data-act="modal-close">Cerrar</button></div>
+      <p class="small">${syncChip()} ${syncErr ? `<br><span style="color:var(--danger)">${esc(syncErr)}</span>` : ""}</p>
+      <div class="eyebrow">Vincular otro dispositivo</div>
+      <p class="small">Abre la cámara del móvil y escanea este código. Se abrirá la web ya conectada y tus datos se unirán solos.</p>
+      <div class="qr" id="qr-box"><span class="small muted">Generando código…</span></div>
+      <p class="small muted">¿No puedes escanear? Copia el enlace y envíatelo (por ejemplo, a ti mismo por WhatsApp o correo) y ábrelo en el otro dispositivo.</p>
+      <div class="row"><button class="btn sm" data-act="sync-copy-link">Copiar enlace de vinculación</button></div>
+      <p class="small" style="color:var(--warn)">Este código y el enlace dan acceso a tus datos de estudio: no los compartas con nadie.</p>
+      <hr class="hr">
+      <div class="row"><button class="btn sm" data-act="sync-now">Sincronizar ahora</button><button class="btn sm ghost" data-act="sync-off">Desconectar este dispositivo</button></div>`, "Sincronización");
+    loadQR().then(qr => { const q = qr(0, "M"); q.addData(syncLink()); q.make(); const box = $("#qr-box"); if (box) box.innerHTML = q.createSvgTag({cellSize:4, margin:3, scalable:true, alt:"Código QR para vincular otro dispositivo"}); })
+      .catch(() => { const box = $("#qr-box"); if (box) box.innerHTML = `<span class="small muted">No he podido generar el código QR. Usa «Copiar enlace de vinculación».</span>`; });
+    return;
+  }
+  modal(`<div class="card-h"><h2>Sincronizar móvil y ordenador</h2><button class="btn ghost sm" data-act="modal-close">Cerrar</button></div>
+    <p class="small">Tus datos se guardan en un archivo privado de tu cuenta de GitHub que solo tú puedes ver. Cada dispositivo conectado lo lee y lo actualiza solo.</p>
+    <div class="callout"><b>¿Ya lo configuraste en otro dispositivo?</b><span class="small">Allí, abre esta misma ventana (el aviso «Sincronizado» de la pantalla Hoy) y escanea su código QR con este móvil. No hace falta nada más.</span></div>
+    <div class="eyebrow">Si es la primera vez (hazlo en el ordenador)</div>
+    <div class="steps">
+      <div class="step"><div class="body"><b>Crea una llave de acceso en GitHub</b><div class="small muted">Se abre con el permiso correcto ya marcado. En «Expiration» elige «No expiration» y pulsa «Generate token» abajo del todo.</div></div><a class="btn sm" href="https://github.com/settings/tokens/new?scopes=gist&description=Segunda%20Mente%20FPE" target="_blank" rel="noopener">Abrir GitHub</a></div>
+      <div class="step"><div class="body"><b>Copia el código que empieza por <code>ghp_</code></b><div class="small muted">GitHub solo te lo enseña una vez.</div></div></div>
+      <div class="step"><div class="body"><b>Pégalo aquí y conecta</b>
+        <div class="row" style="margin-top:6px"><input type="password" id="sync-token" placeholder="ghp_…" autocomplete="off" style="flex:1;min-width:160px"><button class="btn sm primary" data-act="sync-connect">Conectar</button></div></div></div>
+    </div>
+    <p class="small muted">Después te enseñaré un código QR para vincular el móvil en un segundo. El código solo da acceso a tus gists y se guarda únicamente en tus dispositivos.</p>`, "Sincronización");
+}
+function linkFromHash(){
+  if (IN_CLAUDE || !location.hash.startsWith("#" + LINK_KEY)) return;
+  const token = decodeURIComponent(location.hash.slice(1 + LINK_KEY.length));
+  try { history.replaceState(null, "", location.pathname + "#hoy"); } catch(e){ location.hash = "hoy"; }
+  if (!/^[A-Za-z0-9_]{20,}$/.test(token)){ toast("El enlace de vinculación no es válido."); return; }
+  if (sync.token === token && sync.gistId) { toast("Este dispositivo ya estaba vinculado."); return; }
+  toast("Vinculando con tus otros dispositivos…");
+  gistConnect(token);
+}
 function syncSection(){
+  if (IN_CLAUDE) return "";
+  return `<div class="eyebrow">Móvil y ordenador</div><div class="row">${syncChip()}<button class="btn sm" data-act="sync-wizard">${sync.gistId ? "Vincular otro dispositivo" : "Configurar sincronización"}</button></div><hr class="hr">`;
+}
+function syncSectionOld(){
   if (IN_CLAUDE) return "";
   if (sync.gistId) return `<div class="eyebrow">Sincronización entre dispositivos</div>
     <p class="small">Activa en este dispositivo. ${sync.last ? "Última sincronización: " + ago(sync.last) + "." : ""} ${syncErr ? `<br><span style="color:var(--danger)">${esc(syncErr)}</span>` : ""}</p>
@@ -2230,6 +2305,7 @@ const INTENTS = [
   ["habits", ["habito","habitos","rutina"]],
   ["garden", ["jardin","plantas","arbol","arboles","bosque"]],
   ["challenges", ["reto","retos","desafio"]],
+  ["sync", ["sincroniz","movil y ordenador","ordenador y movil","otro dispositivo","mismo progreso","dispositivos","vincular","en el movil y"]],
   ["summary", ["semana pasada","resumen semanal","como fue la semana","balance semanal"]],
   ["guide", ["guia","como se usa","como uso la app","tutorial","atajos"]],
   ["freeze", ["comodin","congelar racha","perder la racha","proteger la racha"]]
@@ -2413,6 +2489,7 @@ const INTENT_REPLIES = {
     const worst = rows.slice().sort((a,b) => a.st.pct - b.st.pct)[0], wt = worst.st.weak[0];
     return {html:`Temario dominado:<ul>${rows.map(({s,st}) => `<li><b>${esc(s.name)}</b>: ${st.pct}%${st.weak.length ? ` · flojos: ${st.weak.slice(0,3).map(t => esc(t.name)).join(", ")}` : " · todo estudiado"}</li>`).join("")}</ul>${wt ? `Te propongo empezar por <b>${esc(wt.name)}</b> (${esc(worst.s.name)}).` : ""}`, acts: wt ? [["Estudiar " + clip(wt.name, 22), "focus", "|" + S.settings.focus + "|" + worst.s.id + "|Tema: " + wt.name]] : []};
   },
+  sync: () => ({html: IN_CLAUDE ? `Aquí tus datos ya se guardan en tu cuenta de Claude.` : sync.gistId ? `Este dispositivo ya está sincronizado (${syncStatusText().toLowerCase()}). Para añadir el móvil u otro ordenador, abre la ventana de sincronización y escanea el código QR con él.` : `Para tener el mismo progreso en el móvil y el ordenador: configúralo una vez en el ordenador (2 minutos, con una llave de GitHub) y luego vincula el móvil escaneando un código QR.`, acts:[[sync.gistId ? "Vincular otro dispositivo" : "Configurar sincronización","sync-wizard",""]]}),
   summary: () => ({html: weekSummaryHtml(), acts:[["Planificar esta semana","auto-plan",""],["Ver progreso","go","progreso"]]}),
   guide: () => ({html:`En la guía rápida tienes la rutina recomendada en 4 momentos (empezar el día, estudiar, cerrar el día y el domingo), qué hacer antes de un examen y los atajos de teclado.`, acts:[["Abrir la guía","go","guia"]]}),
   freeze: () => ({html:`El comodín de racha cuesta ${FREEZE_COST} monedas y puedes tener hasta ${FREEZE_MAX}. Si un día no estudias, se usa solo y tu racha sigue. Tienes ${S.freezes||0} y ${coins()} monedas.`, acts:[["Ir a recompensas","go","progreso"]]}),
@@ -2449,6 +2526,7 @@ function coachDo(kind, arg){
   if (kind === "say") return coachAsk(arg);
   if (kind === "go") return go(arg);
   if (kind === "settings") return openSettings();
+  if (kind === "sync-wizard") return openSyncWizard();
   if (kind === "plan-subjects"){ planTab = "asignaturas"; return go("plan"); }
   if (kind === "auto-plan"){ planTab = "semana"; weekOff = 0; apPreview = autoPlan(); return go("plan"); }
   if (kind === "plan-week"){ planTab = "semana"; return go("plan"); }
@@ -2712,6 +2790,9 @@ function handleAct(act, a, e, task){
     case "ten-min": breathStop(); startFocusOn(smallest() || null, 10); break;
     case "five-min": breathStop(); startFocusOn(smallest() || null, 5); toast("Solo 5 minutos. Si luego quieres seguir, genial."); break;
     case "undo": doUndo(); break;
+    case "sync-wizard": openSyncWizard(); break;
+    case "sync-banner-off": try { localStorage.setItem("segunda-mente-syncbanner", "no"); } catch(err){} render(); toast("Puedes activarla cuando quieras en Ajustes."); break;
+    case "sync-copy-link": { const link = syncLink(); if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => toast("Enlace copiado. Ábrelo en el otro dispositivo."), () => toast(link)); else toast(link); break; }
     case "hoy-min": S.settings.hoyMin = !S.settings.hoyMin; save(); render(); break;
     case "hoy-custom": openHoyCustom(); break;
     case "hoy-up": case "hoy-down": { const k = a.closest("[data-k]").dataset.k, o = hoyOrder(), i = o.indexOf(k), j = act === "hoy-up" ? i-1 : i+1; if (j >= 0 && j < o.length){ [o[i], o[j]] = [o[j], o[i]]; S.settings.hoyOrder = o; save(); render(); openHoyCustom(); } break; }
@@ -2783,8 +2864,8 @@ function handleAct(act, a, e, task){
     case "coach-clear": coachMsgs = []; saveCoach(); render(); break;
     case "coach-do": { const m = coachMsgs[+a.dataset.i], ac = m && m.acts && m.acts[+a.dataset.j]; if (ac) coachDo(ac[1], ac[2]); break; }
     case "sync-connect": { const v = $("#sync-token").value.trim(); if (!v){ toast("Pega primero el token."); break; } a.disabled = true; a.textContent = "Conectando…"; gistConnect(v); break; }
-    case "sync-now": gistSync().then(() => { toast(syncErr || "Sincronizado"); if ($("#modal-root").innerHTML) openSettings(); }); break;
-    case "sync-off": sync = {}; saveSyncCfg(); paintSync(); openSettings(); toast("Este dispositivo ya no sincroniza. Tus datos siguen aquí."); break;
+    case "sync-now": gistSync().then(() => { toast(syncErr || "Sincronizado"); if ($("#modal-root").innerHTML) openSyncWizard(); }); break;
+    case "sync-off": sync = {}; saveSyncCfg(); paintSync(); closeModal(); render(); toast("Este dispositivo ya no sincroniza. Tus datos siguen aquí."); break;
     case "ctl-add": { const v = $("#ctl-in").value.trim(); if (!v) break; S.control.push({id:uid(), text:v, v:a.dataset.v}); save(); render(); setTimeout(() => $("#ctl-in")?.focus()); break; }
     case "ctl-task": { const c = S.control.find(x => x.id === a.dataset.id); addTask({title:c.text}); S.control = S.control.filter(x => x !== c); save(); render(); toast("Convertido en tarea en Plan"); break; }
     case "ctl-drop": S.control = S.control.filter(x => x.id !== a.dataset.id); save(); render(); toast("Soltado. No era tuyo de cargar."); break;
@@ -2852,6 +2933,7 @@ applyFreeze();
 render();
 connect();
 syncInit();
+linkFromHash();
 })();
 </script>
 </body></html>

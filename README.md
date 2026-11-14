@@ -26,8 +26,13 @@ Web para organizar el estudio del grado en Filosofía, Política y Economía (UP
 - **Progreso**: niveles y XP, recompensas que canjeas con monedas (cada una indica cuánto tiempo de estudio te falta para conseguirla), mapa de constancia, horas por asignatura, tu hora más productiva, 18 logros y revisión semanal.
 - **Calma**: plan anti-agobio en 3 pasos, respiración guiada, lo que depende de mí (Epicteto), regla de los 5 minutos.
 
-## Datos y sincronización
-En **Ajustes → Sincronización entre dispositivos** pegas un token de GitHub con permiso `gist` y tus datos se guardan en un gist privado de tu cuenta, compartido entre todos tus dispositivos (se unen automáticamente, incluidos los borrados). Sin sincronización, los datos se guardan solo en el navegador. En **Ajustes → Tus datos** puedes descargar una copia (.json) y restaurarla en otro navegador o en la versión de Claude. Haz copias de vez en cuando.
+## Datos y sincronización entre móvil y ordenador
+1. En el ordenador, pulsa el aviso «Solo en este dispositivo» de la pantalla Hoy (o Ajustes → Configurar sincronización).
+2. Crea una llave de acceso en GitHub con el enlace del asistente (permiso `gist` ya marcado, sin caducidad), cópiala y pégala. Tus datos se guardan en un gist privado de tu cuenta.
+3. El asistente muestra un **código QR**: escanéalo con la cámara del móvil y la web se abre ya vinculada. También puedes copiar el enlace de vinculación y abrirlo en el otro dispositivo.
+
+Cada dispositivo sube sus cambios a los pocos segundos y descarga los de los demás cada minuto y al volver a la app. Los cambios se unen (incluidos los borrados), así que puedes usar los dos a la vez. Sin sincronización, los datos se guardan solo en el navegador; en Ajustes hay copias automáticas y exportación.
 
 ## Desarrollo
+`vendor/qrcode-generator.js` es [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) de Kazuhiko Arase (licencia MIT).
 `src/segunda-mente.html` es la fuente (también se publica como artefacto de Claude, donde guarda en tu cuenta y tiene IA). `./build.sh` genera `index.html` para GitHub Pages.
