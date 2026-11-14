@@ -1,0 +1,28 @@
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Comprobar que index.html está generado desde src/
+        run: |
+          ./build.sh
+          git diff --exit-code index.html
+      - name: Instalar Playwright y Chromium
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+      - name: Ejecutar las pruebas
+        run: npm test

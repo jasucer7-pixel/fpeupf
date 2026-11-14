@@ -1,0 +1,12 @@
+{
+  "name": "segunda-mente-fpe",
+  "private": true,
+  "description": "App de estudio para FPE en la UPF",
+  "scripts": {
+    "build": "./build.sh",
+    "test": "node tests/app.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

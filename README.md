@@ -20,6 +20,11 @@ Web para organizar el estudio del grado en Filosofía, Política y Economía (UP
 - **Sesión de estudio en cola**: prepara varios bloques seguidos y Foco carga el siguiente al terminar cada uno. **Subtareas** (pasos) dentro de cada tarea.
 - **Comodín de racha** (50 monedas): protege tu racha si un día no puedes estudiar. **Celebraciones** al subir de nivel, desbloquear logros, cobrar retos o terminar lo de hoy.
 - **Guía rápida** (tecla ?) con la rutina recomendada y los atajos; el coach te da un **resumen de la semana pasada** los lunes.
+- **Concentración**: modo **flowtime** (sin límite, pausa proporcional), sonidos de olas, cafetería y biblioteca, **ritual de inicio** antes de cada bloque y **análisis de distracciones** por hora y asignatura.
+- **Calendario** completo (día, semana por horas, mes y agenda) con tus eventos (también semanales), clases, fechas límite, tareas planificadas y bloques hechos. Exportable a Google Calendar.
+- **Organización**: tiempo real frente a estimado (el planificador aprende tu ritmo), vista del **trimestre**, matriz **urgente/importante** y **plantillas semanales** por asignatura.
+- **Motivación**: **liga contra tu semana pasada**, imagen para **compartir tu semana**, **Mi camino** (hitos hacia la UE, la OTAN o la ONU), **tienda** de colores y jardines, **logros secretos y de trimestre** y **carta a tu yo futuro**.
+- **Bienestar**: sueño y ánimo con su efecto en tu estudio, aviso de **semana sobrecargada**, **modo vacaciones** y **tarro de logros**.
 - **Coach**: entrenador sin IA que conoce tus tareas, exámenes y horas. Entiende órdenes («añade examen de Matemáticas el jueves», «apunta una duda: …», «empieza un bloque de 50 min»), te dice qué hacer ahora, te hace un plan para hoy, te anima cuando estás agobiado o sin ganas, te da técnicas de estudio por asignatura y explica unos 90 conceptos clave de FPE.
 - **Repasar**: tarjetas con repetición espaciada (estilo Anki), por asignatura, alta masiva con `pregunta :: respuesta`.
 - **Mente**: notas rápidas (apuntes, ideas, dudas, descarga mental), búsqueda, convertir en tarea o tarjeta. Captura rápida desde cualquier pantalla con el botón + o la tecla N.
@@ -31,8 +36,14 @@ Web para organizar el estudio del grado en Filosofía, Política y Economía (UP
 2. Crea una llave de acceso en GitHub con el enlace del asistente (permiso `gist` ya marcado, sin caducidad), cópiala y pégala. Tus datos se guardan en un gist privado de tu cuenta.
 3. El asistente muestra un **código QR**: escanéalo con la cámara del móvil y la web se abre ya vinculada. También puedes copiar el enlace de vinculación y abrirlo en el otro dispositivo.
 
-Cada dispositivo sube sus cambios a los pocos segundos y descarga los de los demás cada minuto y al volver a la app. Los cambios se unen (incluidos los borrados), así que puedes usar los dos a la vez. Sin sincronización, los datos se guardan solo en el navegador; en Ajustes hay copias automáticas y exportación.
+Cada dispositivo sube sus cambios a los pocos segundos y descarga los de los demás cada minuto y al volver a la app. Los cambios se unen (incluidos los borrados), así que puedes usar los dos a la vez. Sin sincronización, los datos se guardan solo en el navegador; en Ajustes hay copias automáticas y exportación. Con sincronización, en Ajustes → Historial de versiones puedes volver a cualquier versión guardada en GitHub.
+
+La interfaz está también en **catalán (beta)**: Ajustes → Idioma. Las respuestas del coach y algunos textos largos siguen en castellano.
 
 ## Desarrollo
+[![Pruebas](https://github.com/jasucer7-pixel/fpeupf/actions/workflows/pruebas.yml/badge.svg)](https://github.com/jasucer7-pixel/fpeupf/actions/workflows/pruebas.yml)
+
+Cada cambio pasa por `npm test` (Playwright) en GitHub Actions: primer uso, migración de datos, todas las secciones, tareas y deshacer, foco, calendario, coach, sincronización entre dos dispositivos con historial de versiones y catalán. Los datos de prueba son inventados.
+
 `vendor/qrcode-generator.js` es [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) de Kazuhiko Arase (licencia MIT).
 `src/segunda-mente.html` es la fuente (también se publica como artefacto de Claude, donde guarda en tu cuenta y tiene IA). `./build.sh` genera `index.html` para GitHub Pages.
